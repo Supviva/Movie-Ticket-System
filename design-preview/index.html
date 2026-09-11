@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="9Tsa3bJi2eeb7f1iqxzrVx">
+<head data-page-node-id="Qrvu4j2P9nvBb73lZPNSkB">
+<meta charset="UTF-8" data-page-node-id="LkHJfAL3fdaD3xmoAUdndR">
+<title>光影票务 · 首页改版 Demo</title>
+<style>
+  :root{
+    --canvas:#121212; --surface:#1e1e1e; --surface2:#2a2a2a;
+    --ink:#ffffff; --ink-soft:#e7e8e8; --muted:#9e9e9e; --line:#2a2a2a;
+    --primary:#ff7300; --link:#3478c1; --purple:#9c4eb0;
+    --gold:#be8a2a; --silver:#d6dbe2; --platinum:#67c6c1; --diamond:#7fb4ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#0a0a0a; color:var(--ink);
+    font-family:"Microsoft YaHei","PingFang SC",sans-serif;
+    padding:28px 20px 60px;
+  }
+  .page-head{max-width:1320px;margin:0 auto 22px}
+  .page-head h1{font-size:19px;font-weight:500;margin-bottom:6px}
+  .page-head p{font-size:13px;color:var(--muted);line-height:1.7}
+  .toggle{display:flex;gap:8px;margin:18px 0 22px}
+  .toggle button{
+    background:var(--surface);border:1px solid var(--line);color:var(--ink-soft);
+    padding:9px 20px;border-radius:8px;font-size:13px;cursor:pointer;
+    font-family:inherit;transition:.15s;
+  }
+  .toggle button:hover{border-color:#444}
+  .toggle button.on{background:var(--primary);border-color:var(--primary);color:#121212;font-weight:500}
+
+  .stage{max-width:1320px;margin:0 auto}
+  .app{
+    background:var(--canvas);border:1px solid var(--line);border-radius:14px;
+    overflow:hidden;
+  }
+  .hidden{display:none}
+
+  /* ---------- header ---------- */
+  .hd{
+    height:74px;background:var(--surface);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;padding:0 26px;gap:20px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:500;color:var(--link)}
+  .brand svg{color:var(--primary)}
+  .search{
+    margin:0 auto;width:380px;height:40px;background:var(--surface2);
+    border-radius:19px;display:flex;align-items:center;padding:0 5px 0 14px;
+  }
+  .search input{
+    flex:1;background:none;border:none;outline:none;color:var(--ink);
+    font-size:14px;font-family:inherit;
+  }
+  .search input::placeholder{color:var(--muted)}
+  .search .go{
+    width:30px;height:30px;border-radius:50%;background:var(--link);
+    display:grid;place-items:center;flex:0 0 30px;
+  }
+  .nav{display:flex;gap:22px;align-items:center}
+  .nav a{
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    color:var(--ink-soft);font-size:12px;text-decoration:none;cursor:pointer;
+  }
+  .nav a:hover{color:var(--primary)}
+  .nav a svg{opacity:.85}
+
+  .body{padding:20px 26px 36px}
+
+  /* ---------- 通用 ---------- */
+  .sec-title{font-size:19px;font-weight:500;margin-bottom:4px}
+  .sec-link{
+    display:inline-block;font-size:12px;font-weight:500;color:var(--link);
+    margin-bottom:14px;cursor:pointer;
+  }
+  .sec-link:hover{text-decoration:underline}
+  .gap{height:28px}
+
+  /* ---------- 旧版 banner ---------- */
+  .banner-old{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    height:118px;display:flex;align-items:center;padding:0 18px;gap:14px;
+  }
+  .banner-old .arrow{
+    width:32px;height:32px;border:1px solid var(--muted);border-radius:50%;
+    display:grid;place-items:center;color:var(--muted);cursor:pointer;flex:0 0 32px;
+  }
+  .banner-old .mid{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;
+  }
+  .banner-old .row{display:flex;align-items:center;gap:12px}
+  .banner-old .badge{
+    width:40px;height:40px;border-radius:50%;background:var(--link);
+    display:grid;place-items:center;flex:0 0 40px;
+  }
+  .banner-old .hl{font-size:16px;font-weight:500}
+  .banner-old .sub{font-size:13px;color:var(--muted);margin-top:4px}
+  .dots{display:flex;gap:6px}
+  .dot{width:7px;height:7px;border-radius:50%;background:#3a3a3a}
+  .dot.on{background:var(--ink-soft)}
+
+  /* ---------- 旧版影片卡 ---------- */
+  .grid{display:grid;gap:16px 16px}
+  .g6{grid-template-columns:repeat(6,1fr)}
+  .card-old{cursor:pointer}
+  .card-old .poster{
+    width:100%;aspect-ratio:185/263;border-radius:16px;overflow:hidden;
+    position:relative;background:var(--surface2);
+  }
+  .card-old .poster img{width:100%;height:100%;object-fit:cover;display:block}
+  .card-old .t{font-size:14px;font-weight:500;margin-top:8px}
+  .card-old .y{font-size:12px;color:var(--muted);margin-top:3px}
+
+  /* 预售 / 赠票 角标（复刻 PosterPanel.drawBadge） */
+  .bd-pre{
+    position:absolute;top:0;left:0;right:0;height:22px;background:var(--primary);
+    color:#121212;font-size:11px;font-weight:500;display:grid;place-items:center;
+  }
+  .bd-gift{
+    position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:6px;
+    background:var(--purple);display:grid;place-items:center;
+  }
+
+  /* ---------- 新版 hero ---------- */
+  .hero{
+    position:relative;border-radius:16px;overflow:hidden;
+    height:340px;display:flex;align-items:flex-end;
+  }
+  .hero .bg{position:absolute;inset:0}
+  .hero .bg img{width:100%;height:100%;object-fit:cover}
+  .hero .scrim{
+    position:absolute;inset:0;
+    background:linear-gradient(90deg,rgba(18,18,18,.96) 0%,rgba(18,18,18,.82) 38%,rgba(18,18,18,.25) 72%,rgba(18,18,18,.55) 100%);
+  }
+  .hero .scrim2{
+    position:absolute;inset:0;
+    background:linear-gradient(0deg,rgba(18,18,18,.9) 0%,transparent 55%);
+  }
+  .hero .content{position:relative;padding:34px 38px;width:100%;display:flex;gap:26px;align-items:flex-end}
+  .hero .info{flex:1;min-width:0}
+  .hero .tag{
+    display:inline-flex;align-items:center;gap:6px;background:rgba(255,115,0,.16);
+    border:1px solid rgba(255,115,0,.45);color:var(--primary);
+    font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px;margin-bottom:12px;
+  }
+  .hero h2{font-size:32px;font-weight:500;letter-spacing:.5px;margin-bottom:10px}
+  .hero .meta{display:flex;align-items:center;gap:14px;font-size:13px;color:var(--ink-soft);margin-bottom:12px;flex-wrap:wrap}
+  .hero .score{color:#ffb400;font-weight:500;font-size:15px}
+  .hero .m-dot{width:3px;height:3px;border-radius:50%;background:#666}
+  .hero .desc{font-size:13px;color:var(--muted);line-height:1.7;max-width:520px;margin-bottom:20px}
+  .hero .acts{display:flex;gap:12px;align-items:center}
+  .btn-p{
+    background:var(--primary);color:#121212;border:none;font-family:inherit;
+    font-size:14px;font-weight:500;padding:12px 26px;border-radius:8px;cursor:pointer;
+  }
+  .btn-p:hover{background:#e06500}
+  .btn-s{
+    background:rgba(255,255,255,.08);color:var(--ink);border:1px solid rgba(255,255,255,.18);
+    font-family:inherit;font-size:14px;padding:12px 22px;border-radius:8px;cursor:pointer;
+  }
+  .btn-s:hover{background:rgba(255,255,255,.14)}
+  .hero .thumbs{display:flex;gap:8px}
+  .hero .thumb{
+    width:52px;height:74px;border-radius:8px;overflow:hidden;cursor:pointer;
+    opacity:.45;border:2px solid transparent;transition:.15s;flex:0 0 52px;
+  }
+  .hero .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .hero .thumb.on{opacity:1;border-color:var(--primary)}
+
+  /* ---------- 类型筛选 ---------- */
+  .filters{display:flex;gap:9px;flex-wrap:wrap;margin:22px 0 4px}
+  .chip{
+    background:var(--surface);border:1px solid var(--line);color:var(--ink-soft);
+    font-size:13px;padding:7px 16px;border-radius:20px;cursor:pointer;font-family:inherit;
+  }
+  .chip:hover{border-color:#4a4a4a;color:var(--ink)}
+  .chip.on{background:var(--primary);border-color:var(--primary);color:#121212;font-weight:500}
+
+  /* ---------- 新版影片卡 ---------- */
+  .card-new{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:10px;cursor:pointer;transition:.18s;
+  }
+  .card-new:hover{
+    border-color:var(--primary);transform:translateY(-4px);
+    box-shadow:0 10px 26px rgba(0,0,0,.5);
+  }
+  .card-new .poster{
+    width:100%;aspect-ratio:185/250;border-radius:10px;overflow:hidden;
+    position:relative;background:var(--surface2);margin-bottom:11px;
+  }
+  .card-new .poster img{width:100%;height:100%;object-fit:cover;display:block;transition:.3s}
+  .card-new:hover .poster img{transform:scale(1.05)}
+  .card-new .rate{
+    position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.78);
+    color:#ffb400;font-size:12px;font-weight:500;padding:3px 8px;border-radius:6px;
+  }
+  .card-new .fmt{
+    position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.78);
+    color:#c9c9c9;font-size:11px;padding:3px 7px;border-radius:6px;
+  }
+  .card-new .play{
+    position:absolute;inset:0;display:grid;place-items:center;
+    background:rgba(18,18,18,.5);opacity:0;transition:.2s;
+  }
+  .card-new:hover .play{opacity:1}
+  .card-new .play div{
+    width:48px;height:48px;border-radius:50%;background:var(--primary);
+    display:grid;place-items:center;
+  }
+  .card-new h3{font-size:14px;font-weight:500;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card-new .tags{display:flex;gap:6px;font-size:11px;color:var(--muted);margin-bottom:11px;flex-wrap:wrap}
+  .card-new .tags span{
+    background:rgba(255,255,255,.05);padding:2px 7px;border-radius:4px;
+  }
+  .card-new .buy{
+    width:100%;background:var(--primary);color:#121212;border:none;font-family:inherit;
+    font-size:13px;font-weight:500;padding:9px;border-radius:8px;cursor:pointer;
+  }
+  .card-new:hover .buy{background:#e06500}
+
+  /* ---------- 空状态 ---------- */
+  .empty{
+    padding:64px 20px;text-align:center;color:var(--muted);
+    background:var(--surface);border:1px dashed var(--line);border-radius:14px;
+  }
+  .empty h3{font-size:15px;font-weight:500;color:var(--ink-soft);margin:14px 0 8px}
+  .empty p{font-size:13px;margin-bottom:18px}
+
+  .footnote{
+    max-width:1320px;margin:26px auto 0;font-size:12px;color:#666;line-height:1.8;
+    border-top:1px solid #222;padding-top:16px;
+  }
+</style>
+</head>
+<body data-page-node-id="Gztt5hIDScUWJPCxiEqKo0">
+
+<div class="page-head" data-page-node-id="YGjKMkmaqYjAPdcHy3HsPY">
+  <h1 data-page-node-id="P2HByxTnFxHQDwMZwLJcp4">光影票务 · 首页改版 Demo</h1>
+  <p data-page-node-id="mWWasVAA9IiUaMRJ8Hidlt">用项目真实色板与数据结构还原。切换下方按钮对比「原版」与「改版」。原版代码未做任何改动。</p>
+  <div class="toggle" data-page-node-id="JxCmi9P0xFYAqe90hSraEl">
+    <button id="btnOld" class="on" onclick="show('old')" data-page-node-id="VcfVqUx1eKBQdJedJFw6NN">原版首页</button>
+    <button id="btnNew" onclick="show('new')" data-page-node-id="GSacI56GSVqwysvCfLg2mM">改版首页</button>
+  </div>
+</div>
+
+<div class="stage" data-page-node-id="9iBh6Z7DHfHeMa0mE72GLE">
+
+<!-- ============ 原版 ============ -->
+<div class="app" id="old" data-page-node-id="MJa48VUer5btbma7rsjoxs">
+  <div class="hd" data-page-node-id="gMCN15FMYaeOhAX6zs5T6d">
+    <div class="brand" data-page-node-id="m7JePGOFECtNlOA7B3zPCc">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" data-page-node-id="h9eXhiNfD5E2MwUSIIPzFU">
+        <rect x="2.5" y="4.5" width="19" height="15" rx="2.5" data-page-node-id="PASgzdszRH7u4pJLDQFN7s"/><path d="M7 4.5v15M17 4.5v15M2.5 9.5h4.5M2.5 14.5h4.5M17 9.5h4.5M17 14.5h4.5" data-page-node-id="GeAW0oMQqL442WBAR9Ex9k"/>
+      </svg>
+      光影票务
+    </div>
+    <div class="search" data-page-node-id="C59msrMLv44ij5Y1jiPAtA">
+      <input placeholder="搜索影片名称、类型或导演" data-page-node-id="07G3rEWMU1Cvid1fXdkbhm">
+      <div class="go" data-page-node-id="YpGiq8FAoyYUdC8A6HE3R3"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" data-page-node-id="TXGESPPqSitk7OE5Ts14CR"><circle cx="10.5" cy="10.5" r="6.5" data-page-node-id="eFN96YlrRde9TnMliETquU"/><path d="M15.5 15.5L21 21" data-page-node-id="e46GafzlLSY0FChaQD4muv"/></svg></div>
+    </div>
+    <div class="nav" data-page-node-id="CKJeVSt6D4k080b5LAGemM">
+      <a data-page-node-id="iDt40ENeRWYEFC51j9hTgc"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" data-page-node-id="gRpBKdymmhxWJHbEkcBDzq"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5" data-page-node-id="3X5wEkhQSE1XxIQIEbG4v1"/><path d="M7 4.5v15M17 4.5v15" data-page-node-id="zGLcU36yLmxYDCO91NQ0qw"/></svg>影片</a>
+      <a data-page-node-id="HCES0FTFP7uDcNU1Hglk33"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" data-page-node-id="H9MsBjekN2PlJLgrEgQmFr"><path d="M3 8.5a2 2 0 012-2h14a2 2 0 012 2v2a2.5 2.5 0 000 5v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2a2.5 2.5 0 000-5v-2z" data-page-node-id="1nqCEc06qwEJe7FNkuVqZV"/><path d="M14 6.5v11" stroke-dasharray="2 2.5" data-page-node-id="RfyB6UvXA8xuuv6zK0D9nl"/></svg>我的订单</a>
+      <a data-page-node-id="xGcbIVy8AANwDQz5lvk5Eo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" data-page-node-id="LCi6gRAzYCXIBrkxIEevoY"><path d="M12 3l2.7 5.9 6.3.7-4.7 4.3 1.3 6.1L12 16.9 6.4 20l1.3-6.1L3 9.6l6.3-.7L12 3z" data-page-node-id="rWNQNNxDDFlXPCio91AzJC"/></svg>我的会员</a>
+      <a data-page-node-id="9tkCJnYlfmpYHWLvakm8EY"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" data-page-node-id="hxEHQAdXi3jjtSGKqvTKDm"><circle cx="9" cy="20" r="1.4" data-page-node-id="364DbvT1Jmbjp1BENcCNTg"/><circle cx="18" cy="20" r="1.4" data-page-node-id="ZhAcQY2wQam6dOPwfK7uGT"/><path d="M2.5 3.5h2.6l2.3 11.6h11.2l2.4-8.4H6" data-page-node-id="plW7cbE3qyKpHua2tnwyNr"/></svg>购物车</a>
+      <a data-page-node-id="FNztHddQt9czxl4rHSBTHG"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" data-page-node-id="PEcs8jbUKUqNo4RGWyaFRF"><circle cx="12" cy="8" r="3.6" data-page-node-id="eNjOwgHB8t6aOF8trDDj12"/><path d="M4.5 20.5c0-4 3.4-6.5 7.5-6.5s7.5 2.5 7.5 6.5" data-page-node-id="owZHv6xEjYTuwg4qkFzxNg"/></svg>退出</a>
+    </div>
+  </div>
+
+  <div class="body" data-page-node-id="baAtZy4NOou9h9Yt6Jw3WZ">
+    <!-- 旧 banner -->
+    <div class="banner-old" data-page-node-id="7BKcEpC9Vwc0zHwXpqzP5V">
+      <div class="arrow" data-page-node-id="ya49u5JzFuHyRk343Cg5sz"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" data-page-node-id="EAdCliMzUaKfxzBzawQpH9"><path d="M15 5l-7 7 7 7" data-page-node-id="OuFzKbUsRsi5OvZ2Y1egRi"/></svg></div>
+      <div class="mid" data-page-node-id="vbBDrJjPa8HshMnDtfQyWz">
+        <div class="row" data-page-node-id="jAcGwgdfSRkfLf0QUE5Qir">
+          <div class="badge" data-page-node-id="zImfWIXNmHJelnaU2D7zaD"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" data-page-node-id="oe3CPJFrhkgejuHfhDDPFI"><path d="M12 3l2.7 5.9 6.3.7-4.7 4.3 1.3 6.1L12 16.9 6.4 20l1.3-6.1L3 9.6l6.3-.7L12 3z" data-page-node-id="03QiyLnrmLajSxf8WCrVNA"/></svg></div>
+          <div data-page-node-id="rmjHP3MDbhaXQAB2AO8rxD">
+            <div class="hl" data-page-node-id="WuxbYp4LHoQ2Rur8AZboET">钻石会员购票立享 8折！</div>
+            <div class="sub" data-page-node-id="nZ66yYR7OoRjfp9i4BUJDz">累计消费满 ¥5000.00 即可晋升</div>
+          </div>
+        </div>
+        <div class="dots" data-page-node-id="8BPFsP7VPWONkngPmY8ANB"><span class="dot on" data-page-node-id="hlFq2GfVsujXOzl1EyiCRE"></span><span class="dot" data-page-node-id="ePviRKjB8h5Oo2YL5yMIzd"></span><span class="dot" data-page-node-id="2pPhD6opA48gLc65kUZOwN"></span><span class="dot" data-page-node-id="mr2aT4AbCX2jCFAUB1LRdl"></span><span class="dot" data-page-node-id="DCbttHmgDrAsJlGcgr7tgt"></span></div>
+      </div>
+      <div class="arrow" data-page-node-id="uWBMpICIcj5EN9mTZOBN3s"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" data-page-node-id="aAOADoX6kOVxnYcfgGQVXg"><path d="M9 5l7 7-7 7" data-page-node-id="jvDfvsMBz9oZhLjTLTd2JZ"/></svg></div>
+    </div>
+
+    <div class="gap" data-page-node-id="T3mImaM5HaRKh26L2IiO1i"></div>
+
+    <div class="sec-title" data-page-node-id="S2M6jkNuQhG3mobgEfxoFl">正在热映</div>
+    <div class="sec-link" data-page-node-id="90vHIcEwq9ckB0pNxeH4oZ">查看全部影片</div>
+    <div class="grid g6" id="oldGrid1" data-page-node-id="GCoDAzA4XPOCAIyUO0XMhC"></div>
+
+    <div class="gap" data-page-node-id="7Vjl91WKRxzFpIHqk0v4gu"></div>
+
+    <div class="sec-title" data-page-node-id="8ypbxc75YV98ZeAkSLTLUQ">即将上映</div>
+    <div style="height:14px" data-page-node-id="7uXETNlcH0QFLPA5agw2C3"></div>
+    <div class="grid g6" id="oldGrid2" data-page-node-id="ECue9Psd2fUXmHnHT5ZvgE"></div>
+
+    <div class="gap" data-page-node-id="xTbsGrnw6AEzBxaz1nxXxq"></div>
+
+    <div class="sec-title" data-page-node-id="ZP64WAJZdGWRHXGHztcGvF">经典重映</div>
+    <div class="sec-link" data-page-node-id="qzt57ioYSBK3TS8r3Lf6an">查看全部影片</div>
+    <div class="grid g6" id="oldGrid3" data-page-node-id="HCBPlFZrXKiMjYT6eJvodd"></div>
+
+    <div class="gap" data-page-node-id="BOTq44mkwRuZHgAFfeqZBy"></div>
+
+    <div class="sec-title" data-page-node-id="4GwF0nPUqusvfpsJCMpP6I">小食</div>
+    <div style="height:14px" data-page-node-id="HrKaniHhihOgahUpjRGjZq"></div>
+    <div class="grid g6" id="oldSnack" data-page-node-id="aQcnB1xenaUtLxKbuMcka0"></div>
+  </div>
+</div>
+
+<!-- ============ 改版 ============ -->
+<div class="app hidden" id="new" data-page-node-id="bzsHKayvH90NY2UMWB3ncj">
+  <div class="hd" data-page-node-id="CMeE7dfNLexfeiLIDAaDYH">
+    <div class="brand" data-page-node-id="v4wEallv7FdMK2slzp3lDx">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" data-page-node-id="iStsvIlVgHywZiiUS1wd8u">
+        <rect x="2.5" y="4.5" width="19" height="15" rx="2.5" data-page-node-id="1DEI29Au2kBHQ3WdGSnAPG"/><path d="M7 4.5v15M17 4.5v15M2.5 9.5h4.5M2.5 14.5h4.5M17 9.5h4.5M17 14.5h4.5" data-page-node-id="CsFwAqpIqBHNrYCEUIxlZs"/>
+      </svg>
+      光影票务
+    </div>
+    <div class="search" data-page-node-id="F2vDxiAuJciLzM2VQJ9hwn">
+      <input placeholder="搜索影片名称、类型或导演" data-page-node-id="ngGbYVHRhH8GP1POfinvhT">
+      <div class="go" data-page-node-id="9L1v9EWtZYmoKrN8n44piD"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" data-page-node-id="a624PRgmpEiqaukS8XBlSr"><circle cx="10.5" cy="10.5" r="6.5" data-page-node-id="wa4nzIOGwzASjYQUpXcF08"/><path d="M15.5 15.5L21 21" data-page-node-id="o2VxED4MseEB3QyUTnwlLd"/></svg></div>
+    </div>
+    <div class="nav" data-page-node-id="fpSByojvM5v5mb4U6jUtw3">
+      <a data-page-node-id="pczCZEB5pAHryog89zfZtQ"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" data-page-node-id="nCVC2WmFnBGQOj81742la0"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5" data-page-node-id="2ErIMPMkGVn1ejhV1RsBwa"/><path d="M7 4.5v15M17 4.5v15" data-page-node-id="Z5tOjBmPh3ifR7onV4EpgB"/></svg>影片</a>
+      <a data-page-node-id="V5IZsuzagfJkT0BjLwAR46"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" data-page-node-id="AaPZ8oGI96ZARDMWhlCUd7"><path d="M3 8.5a2 2 0 012-2h14a2 2 0 012 2v2a2.5 2.5 0 000 5v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2a2.5 2.5 0 000-5v-2z" data-page-node-id="aJ2qwGzTdRkAtcnBzhCK0i"/><path d="M14 6.5v11" stroke-dasharray="2 2.5" data-page-node-id="hCnqOIF1I15WIZSgZ7WWRP"/></svg>我的订单</a>
+      <a data-page-node-id="lTzPAkTrbJo1lnEq44A4Q9"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" data-page-node-id="zzuIIt2nxlkP81eeDU2NMF"><path d="M12 3l2.7 5.9 6.3.7-4.7 4.3 1.3 6.1L12 16.9 6.4 20l1.3-6.1L3 9.6l6.3-.7L12 3z" data-page-node-id="Uz6XYn1NuNNBrpABUUbcuS"/></svg>我的会员</a>
+      <a data-page-node-id="CvY5lGQXmGSyRtu2BiQJjr"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" data-page-node-id="6NYVEVyA9vWmKxUrxaTF1c"><circle cx="9" cy="20" r="1.4" data-page-node-id="nk7Lkj1KVSs6D5zP0p6Mj3"/><circle cx="18" cy="20" r="1.4" data-page-node-id="4dOIrbmYNZwdqFU8iw5dzK"/><path d="M2.5 3.5h2.6l2.3 11.6h11.2l2.4-8.4H6" data-page-node-id="u7CTA04C4Y3f7OgZWIZci9"/></svg>购物车</a>
+      <a data-page-node-id="4tk7hz2XabqaeYkEXkoNQd"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" data-page-node-id="qdrgwHalLhcEFu1lapRVoF"><circle cx="12" cy="8" r="3.6" data-page-node-id="h72nXqFfpGvzHjvGmYrdSp"/><path d="M4.5 20.5c0-4 3.4-6.5 7.5-6.5s7.5 2.5 7.5 6.5" data-page-node-id="2t8AcUOt6axRTJAFB3UHtu"/></svg>退出</a>
+    </div>
+  </div>
+
+  <div class="body" data-page-node-id="1BZ6zQnkRAU04mAYkLwCZU">
+    <!-- Hero -->
+    <div class="hero" id="hero" data-page-node-id="S0pfMvELRe7zyOTF2aIwNw">
+      <div class="bg" data-page-node-id="SKDx384R0Kx6DR3wirvjsU"><img id="heroImg" src="posters/M001.jpg" alt="" data-page-node-id="FO5Wt2Gx2uxdRVNbtQGKy5"></div>
+      <div class="scrim" data-page-node-id="cLPtsaU28W5IHjUi3E9Mbu"></div><div class="scrim2" data-page-node-id="rSdbX6yFyoGMFnP1VZYKxb"></div>
+      <div class="content" data-page-node-id="vbH3yf6kQFxFZfytxqS6Oo">
+        <div class="info" data-page-node-id="WaVgr5PwRR686yuFBMi3CV">
+          <div class="tag" data-page-node-id="9eUj0nMydxRmcIKwEKfKiC">● 正在热映</div>
+          <h2 id="heroTitle" data-page-node-id="lFGBNqj4zHvM4eF5ysnbN3">泰坦尼克号</h2>
+          <div class="meta" data-page-node-id="Ihb2PlRUdMrQrbcb4XbN2X">
+            <span class="score" id="heroScore" data-page-node-id="VATcSOK0VO2gBZ9KZ0Mg4h">9.5</span>
+            <span class="m-dot" data-page-node-id="w1Yda1uoNOiS7xtHGtpfDM"></span>
+            <span id="heroGenre" data-page-node-id="Q6IzgbYJZ7Vi2XeDenhGnn">爱情</span>
+            <span class="m-dot" data-page-node-id="lHAhIRpWyjMH2hjllNiGXc"></span>
+            <span id="heroDur" data-page-node-id="3j7aeyQBDWm0vUd8YrAXd2">194 分钟</span>
+            <span class="m-dot" data-page-node-id="GoSGaBmFVTdCeEuZFGkzH5"></span>
+            <span id="heroFmt" data-page-node-id="JV0VEFTA9rumUdF0dPD3R1">2D</span>
+            <span class="m-dot" data-page-node-id="KhtVeByuj5z717lUwgzKpO"></span>
+            <span id="heroDir" data-page-node-id="IzZSEDV9mOM6apCJgz1u2y">詹姆斯·卡梅隆</span>
+          </div>
+          <div class="desc" id="heroDesc" data-page-node-id="uX6K87KL4dHVf4PISTCsy0"></div>
+          <div class="acts" data-page-node-id="QGKnQCgB4CssmAhye3pYQY">
+            <button class="btn-p" onclick="alert('→ 进入《'+document.getElementById('heroTitle').textContent+'》选座页')" data-page-node-id="EyNyo07StL3iwXl3aMEboR">选座购票</button>
+            <button class="btn-s" onclick="alert('→ 进入影片详情')" data-page-node-id="l1D2mkmirqcLlxjthoDRKM">查看详情</button>
+          </div>
+        </div>
+        <div class="thumbs" id="heroThumbs" data-page-node-id="f57RM2eXXrH30rGuNydR5E"></div>
+      </div>
+    </div>
+
+    <!-- 筛选 -->
+    <div class="filters" id="filters" data-page-node-id="mCTqWujeR4r9L4UI9ai75U"></div>
+
+    <div class="gap" data-page-node-id="wMKWd6YzcGgPIBe6jtpJ1y"></div>
+
+    <div class="sec-title" data-page-node-id="EPzOyZ1F8J5DXQDD0kY4hC">正在热映</div>
+    <div class="sec-link" onclick="alert('→ 展开全部热映影片')" data-page-node-id="4OCXwRRBOHwJLjOJwiGZxM">查看全部 6 部 →</div>
+    <div class="grid g6" id="newGrid1" data-page-node-id="g6evFoNenqqU8rZR6rGv9n"></div>
+
+    <div class="gap" data-page-node-id="xCukQ1hzTfk7mUvkDi5YyE"></div>
+
+    <div class="sec-title" data-page-node-id="GHiFNAGBFvtFakXmdTYaIm">即将上映</div>
+    <div style="height:14px" data-page-node-id="VHPdaJCm9kC7sVUaZ6WDRX"></div>
+    <div class="grid g6" id="newGrid2" data-page-node-id="nZEXA8Zpbn7f59nCJJgnz4"></div>
+
+    <div class="gap" data-page-node-id="owmhST0qtfRMR3GXKykACT"></div>
+
+    <div class="sec-title" data-page-node-id="VZSyzhb2sUhkrpRSodbZ1x">经典重映</div>
+    <div style="height:14px" data-page-node-id="yiAVhe9Y6DRAPD7IQps50x"></div>
+    <div class="grid g6" id="newGrid3" data-page-node-id="DhODCcqJKll7dkP1rvAIxB"></div>
+
+    <div class="gap" data-page-node-id="zbeoDC7vPEjCmhG3OnSovb"></div>
+
+    <div class="sec-title" data-page-node-id="iFq2zJIPVcLYAZ55xjJqz4">小食</div>
+    <div style="height:14px" data-page-node-id="d8vO0B8lcuNxmRfHl3VpBH"></div>
+    <div class="grid g6" id="newSnack" data-page-node-id="lkOPukkG0SCp5jeOoHubd6"></div>
+  </div>
+</div>
+
+</div>
+
+<div class="footnote" data-page-node-id="N9uxV68mo6YG1DAICdlNOG">
+  <strong style="color:#9e9e9e" data-page-node-id="YSN4ib3QP3kxTRwgBeacak">说明</strong>：本页为纯静态预览，用于确认视觉方向；数据取自项目现有 Mock（6 部影片海报为项目内真实资源）。
+  确认后再落到 Java Swing 代码。<br data-page-node-id="8O6D59Mk0K4BYCLpBCZJFk">
+  <strong style="color:#9e9e9e" data-page-node-id="bKmFl7AaXENFQcYvJPNl1g">注意</strong>：原版用 <code data-page-node-id="4dZPYb1NCUUDSCwtBFyLMp">movieSlice(0,6)/(6,12)/(12,18)</code> 切分，但只有 6 部影片，
+  所以「即将上映」「经典重映」实际渲染的是同一批内容——demo 中原样复刻了这一现象以便对照。
+</div>
+
+<script>
+const movies = [
+  {id:'M001',t:'泰坦尼克号',g:'爱情',d:'詹姆斯·卡梅隆',dur:194,f:'2D',y:'1997',r:9.5,s:'1912年，穷画家杰克与富家少女罗丝在泰坦尼克号上坠入爱河，巨轮撞上冰山沉没，留下了一段刻骨铭心的爱情绝唱。'},
+  {id:'M002',t:'阿凡达',g:'科幻',d:'詹姆斯·卡梅隆',dur:162,f:'IMAX',y:'2009',r:8.8,s:'前海军陆战队员杰克前往潘多拉星球，操控"阿凡达"分身融入纳美族，在人类与纳美人的冲突中重新认识生命的意义。'},
+  {id:'M003',t:'盗梦空间',g:'悬疑',d:'克里斯托弗·诺兰',dur:148,f:'2D',y:'2010',r:9.4,s:'造梦师柯布带领团队潜入他人梦境窃取机密，层层嵌套的梦境让现实与虚幻的边界逐渐模糊。'},
+  {id:'M004',t:'肖申克的救赎',g:'剧情',d:'弗兰克·德拉邦特',dur:142,f:'2D',y:'1994',r:9.7,s:'银行家安迪被冤判入狱，在肖申克监狱中用希望与智慧救赎自己，也照亮了狱中好友瑞德的人生。'},
+  {id:'M005',t:'千与千寻',g:'动画',d:'宫崎骏',dur:125,f:'2D',y:'2001',r:9.4,s:'少女千寻随父母误入神灵世界，父母因贪吃变成猪，她在汤屋打工并帮助白龙找回名字，最终救回父母回到人间。'},
+  {id:'M006',t:'大话西游之大圣娶亲',g:'喜剧',d:'刘镇伟',dur:95,f:'2D',y:'1995',r:9.2,s:'至尊宝为救白晶晶穿越时空，却与紫霞仙子相遇相爱，"爱你一万年"的告白成为一代人的经典记忆。'}
+];
+const snacks = [
+  {n:'爆米花',p:'18.00',c:'#ff7300'},{n:'可乐',p:'12.00',c:'#3478c1'},
+  {n:'薯条',p:'16.00',c:'#be8a2a'},{n:'冰淇淋',p:'15.00',c:'#9c4eb0'},{n:'热狗',p:'20.00',c:'#ff7300'}
+];
+const img = id => 'posters/'+id+'.jpg';
+
+/* ---------- 原版渲染 ---------- */
+function oldPosterCard(m, badge){
+  let bd = '';
+  if(badge==='pre') bd = '<div class="bd-pre">预售</div>';
+  else if(badge==='gift') bd = '<div class="bd-gift"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 6v13M5 12h14"/><circle cx="9.5" cy="4.5" r="2"/><circle cx="14.5" cy="4.5" r="2"/></svg></div>';
+  return '<div class="card-old"><div class="poster"><img src="'+img(m.id)+'" alt="">'+bd+'</div>'+
+         '<div class="t">'+m.t+'</div><div class="y">('+m.y+')</div></div>';
+}
+/* 原版：三个分区都用同一批数据（复刻 movieSlice 越界取不到内容的实际表现） */
+function fillOld(){
+  document.getElementById('oldGrid1').innerHTML = movies.slice(0,6).map((m,i)=>oldPosterCard(m, i<3?'gift':null)).join('');
+  document.getElementById('oldGrid2').innerHTML = movies.map(m=>oldPosterCard(m,'pre')).join('');
+  document.getElementById('oldGrid3').innerHTML = movies.map(m=>oldPosterCard(m,null)).join('');
+  document.getElementById('oldSnack').innerHTML = snacks.map(s=>
+    '<div class="card-old"><div class="poster" style="display:grid;place-items:center;background:var(--surface)">'+
+    '<div style="width:64px;height:64px;border-radius:50%;background:'+s.c+';display:grid;place-items:center;color:#fff;font-size:22px">●</div></div>'+
+    '<div class="t" style="text-align:center">'+s.n+'</div>'+
+    '<div class="y" style="text-align:center;color:#ff7300;font-weight:500">¥'+s.p+'</div>'+
+    '<button style="width:100%;margin-top:10px;background:#ff7300;border:none;color:#121212;font-family:inherit;font-size:13px;font-weight:500;padding:8px;border-radius:8px;cursor:pointer">购买</button></div>').join('');
+}
+
+/* ---------- 改版渲染 ---------- */
+let heroIdx = 0, activeFilter = '全部';
+
+const filters = ['全部','爱情','科幻','悬疑','剧情','动画','喜剧'];
+
+function newCard(m){
+  return '<div class="card-new" onclick="alert(\'→ 进入《'+m.t+'\'详情\')">'+
+    '<div class="poster">'+
+      '<img src="'+img(m.id)+'" alt="">'+
+      '<div class="rate">★ '+m.r.toFixed(1)+'</div>'+
+      '<div class="fmt">'+m.f+'</div>'+
+      '<div class="play"><div><svg width="20" height="20" viewBox="0 0 24 24" fill="#121212"><path d="M8 5v14l11-7z"/></svg></div></div>'+
+    '</div>'+
+    '<h3>'+m.t+'</h3>'+
+    '<div class="tags"><span>'+m.g+'</span><span>'+m.dur+' 分钟</span><span>'+m.y+'</span></div>'+
+    '<button class="buy" onclick="event.stopPropagation();alert(\'→ 直接进入《'+m.t+'\'选座页\')">选座购票</button>'+
+  '</div>';
+}
+
+function setHero(i){
+  heroIdx = i;
+  const m = movies[i];
+  document.getElementById('heroImg').src = img(m.id);
+  document.getElementById('heroTitle').textContent = m.t;
+  document.getElementById('heroScore').textContent = m.r.toFixed(1);
+  document.getElementById('heroGenre').textContent = m.g;
+  document.getElementById('heroDur').textContent = m.dur + ' 分钟';
+  document.getElementById('heroFmt').textContent = m.f;
+  document.getElementById('heroDir').textContent = m.d;
+  document.getElementById('heroDesc').textContent = m.s;
+  document.querySelectorAll('#heroThumbs .thumb').forEach((el,k)=>el.classList.toggle('on',k===i));
+}
+
+function fillNew(){
+  document.getElementById('heroThumbs').innerHTML = movies.map((m,i)=>
+    '<div class="thumb'+(i===0?' on':'')+'" onclick="setHero('+i+')"><img src="'+img(m.id)+'" alt=""></div>').join('');
+  setHero(0);
+
+  document.getElementById('filters').innerHTML = filters.map(f=>
+    '<button class="chip'+(f===activeFilter?' on':'')+'" data-f="'+f+'">'+f+'</button>').join('');
+  document.querySelectorAll('#filters .chip').forEach(btn=>{
+    btn.onclick = ()=>{ activeFilter = btn.dataset.f; fillNew(); };
+  });
+
+  const pool = activeFilter==='全部' ? movies : movies.filter(m=>m.g===activeFilter);
+  document.getElementById('newGrid1').innerHTML = pool.length ? pool.map(newCard).join('')
+    : '<div class="empty" style="grid-column:1/-1">'+
+      '<svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>'+
+      '<h3>没有「'+activeFilter+'」类型的影片</h3><p>换个类型筛选，或看看全部影片</p>'+
+      '<button class="btn-p" onclick="activeFilter=\'全部\';fillNew()">查看全部影片</button></div>';
+
+  /* 改版：分区按真实规则取数，互不重复 */
+  document.getElementById('newGrid2').innerHTML = movies.filter(m=>+m.y>=2009).map(newCard).join('');
+  document.getElementById('newGrid3').innerHTML = movies.filter(m=>+m.y<2000).map(newCard).join('');
+  document.getElementById('newSnack').innerHTML = snacks.map(s=>
+    '<div class="card-new"><div class="poster" style="aspect-ratio:1;display:grid;place-items:center">'+
+    '<div style="width:64px;height:64px;border-radius:50%;background:'+s.c+';display:grid;place-items:center">'+
+    '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7"><circle cx="12" cy="12" r="9"/></svg>'+
+    '</div></div><h3 style="text-align:center">'+s.n+'</h3>'+
+    '<div class="tags" style="justify-content:center"><span style="color:#ff7300;font-weight:500;font-size:13px">¥'+s.p+'</span></div>'+
+    '<button class="buy">购买</button></div>').join('');
+}
+
+function show(which){
+  document.getElementById('old').classList.toggle('hidden', which!=='old');
+  document.getElementById('new').classList.toggle('hidden', which!=='new');
+  document.getElementById('btnOld').classList.toggle('on', which==='old');
+  document.getElementById('btnNew').classList.toggle('on', which==='new');
+}
+
+fillOld();
+fillNew();
+</script>
+</body>
+</html>
