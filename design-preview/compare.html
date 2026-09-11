@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="KFuqjXz00W2N2qFBThFlUY">
+<head data-page-node-id="mKuiYae9T2UwrbOiCHgf1e">
+<meta charset="UTF-8" data-page-node-id="VwrhootC760r6myb9xjHNx">
+<meta name="viewport" content="width=device-width,initial-scale=1" data-page-node-id="jvVpph7X9YA1i8AVI9NuyN">
+<title>光影票务 · 前端改进对比演示</title>
+<style>
+:root{
+  --canvas:#121212; --surface:#1e1e1e; --surface2:#2a2a2a;
+  --ink:#ffffff; --ink-soft:#e7e8e8; --muted:#9e9e9e; --line:#2a2a2a;
+  --primary:#ff7300; --primary-hover:#e06500; --primary-soft:#33291f;
+  --link:#3478c1; --purple:#9c4eb0; --success:#16a34a; --warning:#d97706;
+  --danger:#dc2626; --gold:#ffb400; --seat-sold:#d4d7dc;
+  --light-bg:#f2f3f3; --light-input-border:#e6e6e6; --dark-text:#121212;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:#0a0a0a; color:var(--ink);
+  font-family:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Heiti SC","WenQuanYi Micro Hei",sans-serif;
+  font-size:14px; padding:26px 20px 70px;
+}
+a{color:inherit;text-decoration:none}
+
+/* ── 页头 ── */
+.page-head{max-width:1400px;margin:0 auto 18px}
+.page-head h1{font-size:21px;font-weight:500;margin-bottom:8px;letter-spacing:.4px}
+.page-head h1 b{color:var(--primary);font-weight:500}
+.page-head p{font-size:13px;color:var(--muted);line-height:1.7}
+.page-head p code{
+  background:var(--surface);border:1px solid var(--line);border-radius:4px;
+  padding:1px 6px;font-size:12px;color:var(--ink-soft);
+  font-family:Consolas,Monaco,monospace;
+}
+
+/* ── tab 栏 ── */
+.tabs{
+  position:sticky;top:0;z-index:30;background:#0a0a0a;
+  border-bottom:1px solid var(--line);padding:12px 0;margin-bottom:24px;
+}
+.tabs-inner{max-width:1400px;margin:0 auto;display:flex;gap:8px;flex-wrap:wrap}
+.tab{
+  background:transparent;border:1px solid var(--line);color:var(--ink-soft);
+  padding:8px 16px;border-radius:9px;cursor:pointer;
+  font-family:inherit;font-size:13px;transition:border-color .15s,background .15s,color .15s;
+}
+.tab:hover{border-color:#444}
+.tab.on{background:var(--primary);border-color:var(--primary);color:var(--dark-text);font-weight:500}
+.tab .n{
+  display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;
+  border-radius:50%;background:rgba(255,255,255,.14);font-size:11px;margin-right:6px;
+}
+.tab.on .n{background:rgba(0,0,0,.2)}
+
+/* ── 面板 ── */
+.panel{max-width:1400px;margin:0 auto}
+.panel.hidden{display:none}
+.panel-intro{
+  border-left:3px solid var(--primary);background:var(--surface);
+  border-radius:0 10px 10px 0;padding:14px 18px;margin-bottom:22px;
+}
+.panel-intro h2{font-size:15px;font-weight:500;margin-bottom:7px}
+.panel-intro .bad{color:var(--danger);font-size:13px;margin-bottom:4px}
+.panel-intro .good{color:var(--success);font-size:13px}
+
+/* ── 对比栅格 ── */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:12px}
+.col{min-width:0}
+.col-head{
+  display:flex;align-items:center;gap:9px;margin-bottom:10px;
+  font-size:13px;font-weight:500;
+}
+.tagx{
+  font-size:11px;padding:2px 9px;border-radius:20px;
+  border:1px solid var(--line);color:var(--muted);font-weight:400;
+}
+.tagx.old{color:#b56a6a;border-color:#4a2a2a;background:#241616}
+.tagx.new{color:#6eb98a;border-color:#20442f;background:#13251b}
+.col-head .hint{font-size:12px;color:var(--muted);font-weight:400;margin-left:auto}
+
+/* ── 壳：固定 1180px 宽，等比缩放 ── */
+.shell{
+  position:relative;border:1px solid var(--line);border-radius:14px;
+  overflow:hidden;background:var(--canvas);
+}
+.shell-inner{width:1180px;transform-origin:top left}
+.zoom-badge{
+  position:absolute;right:10px;bottom:10px;z-index:20;
+  font-size:11px;color:var(--muted);background:rgba(0,0,0,.7);
+  border:1px solid var(--line);border-radius:20px;padding:2px 10px;
+}
+
+/* ── 按钮 ── */
+.btn-prim{
+  background:var(--primary);color:var(--dark-text);border:none;
+  padding:0 18px;height:36px;border-radius:8px;cursor:pointer;
+  font-family:inherit;font-size:13px;font-weight:500;transition:background .15s,color .15s;
+}
+.btn-prim:hover{background:var(--primary-hover);color:#fff}
+.btn-sec{
+  background:var(--surface);color:var(--ink);border:1px solid var(--line);
+  padding:0 14px;height:36px;border-radius:8px;cursor:pointer;
+  font-family:inherit;font-size:13px;transition:background .15s,border-color .15s;
+}
+.btn-sec:hover{background:var(--surface2);border-color:#3a3a3a}
+
+/* ── 提示小标 ── */
+.note{
+  display:flex;align-items:flex-start;gap:8px;
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:11px 14px;margin:14px 0 0;font-size:12.5px;color:var(--muted);line-height:1.65;
+}
+.note .mk{color:var(--primary);flex:0 0 auto;font-weight:500}
+.note.warn{border-color:#4a2a2a;background:#1c1414}
+.note.warn .mk{color:var(--danger)}
+
+/* ── 仿真 JOptionPane 模态 ── */
+.jmodal{
+  position:absolute;inset:0;background:rgba(0,0,0,.55);
+  display:grid;place-items:center;z-index:15;border-radius:12px;
+}
+.jmodal[hidden]{display:none}
+.jmodal-box{
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:20px 26px 15px;min-width:220px;text-align:center;
+  box-shadow:0 18px 50px rgba(0,0,0,.75);
+}
+.jmodal-title{font-size:13px;font-weight:500;color:var(--ink);margin-bottom:9px}
+.jmodal-body{font-size:13px;color:var(--ink-soft);margin-bottom:17px;line-height:1.6}
+.jmodal-ok{
+  background:var(--primary);color:var(--dark-text);border:none;
+  padding:7px 26px;border-radius:8px;font-family:inherit;font-size:13px;
+  font-weight:500;cursor:pointer;
+}
+.jmodal-ok:hover{background:var(--primary-hover);color:#fff}
+
+/* ── 页脚 ── */
+.foot{
+  max-width:1400px;margin:34px auto 0;padding-top:20px;
+  border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);line-height:1.8;
+}
+.foot b{color:var(--ink-soft);font-weight:500}
+</style>
+</head>
+<body data-page-node-id="DEeDrVpYAsQVUMllYJNBvD">
+
+<!-- ═══ 图标定义表（小食 5 个，各用 2 次） ═══ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" data-page-node-id="uzmaCD9czCeaBbxADDpU9D"><defs data-page-node-id="A7yMto4lY2pQmNejfNF5lS">
+  <symbol id="ic-popcorn" viewBox="0 0 24 24" data-page-node-id="b16EFwBSoAuSGuRSs1myc8">
+    <line x1="4" y1="17" x2="20" y2="17" data-page-node-id="yFBVqJg9UAPeVrdYJa2eEt"/>
+    <line x1="5" y1="17" x2="8" y2="22" data-page-node-id="v89GlQi2XWPyz8fzJHTFeX"/>
+    <line x1="19" y1="17" x2="16" y2="22" data-page-node-id="7SzHnyCMVCM1HLDD2XhcAb"/>
+    <line x1="8" y1="22" x2="16" y2="22" data-page-node-id="4qp926hP3BSifGtVpgS4ek"/>
+    <ellipse cx="6.5" cy="8" rx="3.2" ry="3.2" data-page-node-id="202N8z3dDVXNFWZws3cr7r"/>
+    <ellipse cx="12" cy="6.8" rx="3.2" ry="3.2" data-page-node-id="sKuFKl9OFWHcaCziAosNBb"/>
+    <ellipse cx="17.5" cy="8" rx="3.2" ry="3.2" data-page-node-id="snmoIeZGKKM5bM4ErQjJFC"/>
+  </symbol>
+  <symbol id="ic-cola" viewBox="0 0 24 24" data-page-node-id="BBfQTslKFmJfUGQvVplcL8">
+    <rect x="6" y="5" width="12" height="4" rx="1" data-page-node-id="dXREeasX1H93YqP2azw2S6"/>
+    <line x1="7" y1="9" x2="8.6" y2="22" data-page-node-id="EK2XROLjRExZlORZjCmhxU"/>
+    <line x1="17" y1="9" x2="15.4" y2="22" data-page-node-id="yyDcyByjYD1cYdklqtwSYN"/>
+    <line x1="8.6" y1="22" x2="15.4" y2="22" data-page-node-id="hAn0iuJN5p7RgtErH0QHOc"/>
+    <line x1="14.2" y1="9" x2="11.2" y2="2" data-page-node-id="aLFuIwEfnC4cN0QOpQfK1D"/>
+  </symbol>
+  <symbol id="ic-fries" viewBox="0 0 24 24" data-page-node-id="A7j3PNwRyWAzYDFGZEDoZy">
+    <line x1="5" y1="16" x2="19" y2="16" data-page-node-id="JpdaEMgpMut3Hq8OM0GBrW"/>
+    <line x1="5" y1="16" x2="8" y2="22" data-page-node-id="aENEHAjWDNVWhbk0iyyc3X"/>
+    <line x1="19" y1="16" x2="16" y2="22" data-page-node-id="fkrsIASMPOtBJpfePMM8SF"/>
+    <line x1="8" y1="22" x2="16" y2="22" data-page-node-id="i2vfmjCvYBKzZnCVuaZW0M"/>
+    <line x1="7.5" y1="16" x2="7.5" y2="6" data-page-node-id="sD9pGiDjQ3Ht4eXlTlzjZK"/>
+    <line x1="11" y1="16" x2="11" y2="4" data-page-node-id="1lIjENGtOFA82A8v3791lH"/>
+    <line x1="13.5" y1="16" x2="13.5" y2="5" data-page-node-id="ILWoxMv8dn0sK9KmNBdZfv"/>
+    <line x1="16.8" y1="16" x2="16.8" y2="7" data-page-node-id="S5oi0TfJgdUUvf1NYdrE8Q"/>
+  </symbol>
+  <symbol id="ic-icecream" viewBox="0 0 24 24" data-page-node-id="h7NttpHQxkSQwNc0FSACn2">
+    <circle cx="12" cy="8" r="4.8" data-page-node-id="Uj8GWJP2pqiHtmrC84yUKH"/>
+    <line x1="7.8" y1="11.6" x2="12" y2="22" data-page-node-id="UnQyoMztqsEtB80dTWCb9H"/>
+    <line x1="16.2" y1="11.6" x2="12" y2="22" data-page-node-id="R9iDlFKCzkezXOgJMnXTjz"/>
+    <line x1="12" y1="11.6" x2="12" y2="22" data-page-node-id="0rBPW1HYVaaxVJOf17rktw"/>
+  </symbol>
+  <symbol id="ic-hotdog" viewBox="0 0 24 24" data-page-node-id="8ynQqA3IEsR5nEA5M4NGDg">
+    <path d="M4 13a8 4.6 0 0 1 16 0" data-page-node-id="yJig35uS8bkyxAgM1UEMP9"/>
+    <path d="M4 10a8 4.6 0 0 0 16 0" data-page-node-id="aLjOSO0dzn1y3wgBZYiQ2c"/>
+    <line x1="4" y1="10" x2="5.2" y2="13" data-page-node-id="Hp5JL2CC8eFeA79L1vDjnQ"/>
+    <line x1="20" y1="10" x2="18.8" y2="13" data-page-node-id="5MgdBrhfhM4yHfSEIaytoY"/>
+  </symbol>
+</defs></svg>
+
+<div class="page-head" data-page-node-id="K8AHT7PPvBJtf22siZow3v">
+  <h1 data-page-node-id="EeeyLQKAZ9nCFRuHZ0F05a">光影票务 · 前端改进<span style="color:var(--ink-soft)" data-page-node-id="YhGPN0h1kkZP0Ej0Yx8VIn">对比演示</span></h1>
+  <p data-page-node-id="6HuEEXVoEFc7uAFcprrzYF">
+    左侧为<b style="color:#c98b8b;font-weight:400" data-page-node-id="3uxipof2lliYlk6lviO10s">当前版本</b>的实际表现，右侧为<b style="color:#8ecfa6;font-weight:400" data-page-node-id="dcGy4AlwrbhERPUy3RfRd9">改进后</b>的效果。
+    右侧所有交互都是真的可以操作的 —— 按回车、点导航、输入关键词、点购买都能试。
+    <br data-page-node-id="PRE3uS5P5jXBQOIpBiXHDJ">配色与字体取自项目 <code data-page-node-id="djTjuMhZmBwjhbL55Tw2zK">ui/component/Ui.java</code>，本页为静态预览，确认后再落地到 Swing 代码。
+  </p>
+</div>
+
+<nav class="tabs" data-page-node-id="9P6VINCKo3mZ7S8fo7Z63k"><div class="tabs-inner" data-page-node-id="CseQBXeNIE15jSfRmfOby2">
+  <button class="tab on" data-tab="login" data-page-node-id="rWy9U5yvjosP96vELmDO4G"><span class="n" data-page-node-id="pKm124LpnRI0f8tVWQ2OGl">1</span>登录页回车提交</button>
+  <button class="tab" data-tab="nav" data-page-node-id="AcH0ZeHRFhGGy7y6XXJzQP"><span class="n" data-page-node-id="JXPQpwkwp6dpZHyEnaVjKm">2</span>导航选中态与悬停</button>
+  <button class="tab" data-tab="table" data-page-node-id="Uo8Cn5Vk5GJdhFNLSq7FYq"><span class="n" data-page-node-id="4PLFlwHE8KaYffAaINJ4uM">3</span>后台表格空状态</button>
+  <button class="tab" data-tab="snack" data-page-node-id="oRS5b0hBn3rG1E52pJwPE2"><span class="n" data-page-node-id="JjHoTF650qmwsxZALa0Drs">4</span>小食区伪交互</button>
+</div></nav>
+
+<!-- ══════════════════ TAB 1 · 登录页 ══════════════════ -->
+<section class="panel" data-tab="login" data-page-node-id="zfFcILhSGHyEOmyhn9fkpH">
+  <div class="panel-intro" data-page-node-id="Y4GusbomEDwM74dHMrr4ak">
+    <div class="bad" data-page-node-id="ui5FkiotoPxekWUn5FKwJL">现状：填完用户名密码按回车没有任何反应，必须用鼠标点「登录」按钮。</div>
+    <div class="good" data-page-node-id="8nBCaxa177XFwJ7zq5l9y5">改进：回车直接提交；字段为空时输入框标红并给出行内提示，不用等后端返回错误。</div>
+  </div>
+  <div class="cmp" data-page-node-id="R2hLbr8fLsfsJKuR4IScNp">
+    <div class="col" data-page-node-id="UjgoHUaMFGgrpLlUkP3cnm">
+      <div class="col-head" data-page-node-id="q4UmC3xJtW1Cqg2eQ7b652"><span class="tagx old" data-page-node-id="ldNvuIFNA1lZXSutyjDXFW">当前</span>按回车无反应<span class="hint" data-page-node-id="2LkrYENcqWdc2FioEQuXnD">试试在密码框里按回车</span></div>
+      <div class="shell" data-base="1180" data-page-node-id="DPXZ7vZuDTFaYzSVCewZeu"><div class="shell-inner" data-page-node-id="TxWUXod5JWswykpi5MMeaI">
+        <div class="login-shell old" data-page-node-id="VlGcpF99mVhVYnC5FLHi4v">
+          <div class="login-brand" data-page-node-id="pP0KQ5cTRwLP2vIX6ItuYM">
+            <svg class="mascot" viewBox="0 0 220 220" data-page-node-id="qdODAJLC1P33bmeJ0UqBxt">
+              <defs data-page-node-id="zXSe314sAstFr50nXvhPNk">
+                <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1" data-page-node-id="PXDwHqOz8P13nPkHAYQZAP">
+                  <stop offset="0" stop-color="#ffd166" stop-opacity=".30" data-page-node-id="EtjdZedS5y1JSXBxJCtHeQ"/>
+                  <stop offset="1" stop-color="#ffd166" stop-opacity="0" data-page-node-id="sTKfT793GanVSGM6OhwTl0"/>
+                </linearGradient>
+                <linearGradient id="tk" x1="0" y1="0" x2="1" y2="1" data-page-node-id="8AqZjmqwQN36MqdJ3oRRHx">
+                  <stop offset="0" stop-color="#e31836" data-page-node-id="HLYVhCd78KQYHtdW9KDyBh"/><stop offset="1" stop-color="#ff7300" data-page-node-id="aKiHgJKugtqXvRHQSKTUPp"/>
+                </linearGradient>
+              </defs>
+              <polygon points="76,0 96,0 108,120 84,120" fill="url(#beam)" data-page-node-id="yLFpCFcCLuhOB357VCJrtF"/>
+              <polygon points="124,0 142,0 138,120 114,120" fill="url(#beam)" data-page-node-id="Fx1xhKlzbRDxZrqSHkxkFc"/>
+              <rect x="52" y="62" width="116" height="96" rx="16" fill="url(#tk)" data-page-node-id="RLcFgsdizLmwuY9edVLvrg"/>
+              <g fill="#ffffff" opacity=".92" data-page-node-id="zBrfOfpOXMz8MyZ36CIfn3">
+                <rect x="62" y="76" width="7" height="11" rx="2" data-page-node-id="XWw6NqVJTnFn4VxUWEhYTH"/><rect x="62" y="95" width="7" height="11" rx="2" data-page-node-id="bM5FJs01LYomXFH5XzWtBH"/><rect x="62" y="114" width="7" height="11" rx="2" data-page-node-id="0ahY6Irnu4gy6SSFSEht5m"/><rect x="62" y="133" width="7" height="11" rx="2" data-page-node-id="6xEWlyH9YhFYI2PGCNOLAS"/>
+                <rect x="151" y="76" width="7" height="11" rx="2" data-page-node-id="RkaYHqJ0Buky8NFhn20KHB"/><rect x="151" y="95" width="7" height="11" rx="2" data-page-node-id="JR3I9rWExwT8PPfUMxCuOV"/><rect x="151" y="114" width="7" height="11" rx="2" data-page-node-id="29o6zuKM61X30YtbBlnxy6"/><rect x="151" y="133" width="7" height="11" rx="2" data-page-node-id="Ed4YPS9t3RtUQN8HQrYK1X"/>
+              </g>
+              <ellipse cx="82" cy="96" rx="9" ry="10" fill="#fff" data-page-node-id="0fXkaCyCM8wepDH1XE0jV5"/>
+              <ellipse cx="112" cy="96" rx="9" ry="10" fill="#fff" data-page-node-id="HCGMSIvtO8yfZyDEFE8FyN"/>
+              <circle cx="84" cy="98" r="5" fill="#2a1e2e" data-page-node-id="w0ZzOH0wMcbRII4VFGmvk5"/>
+              <circle cx="110" cy="98" r="5" fill="#2a1e2e" data-page-node-id="LaaU4E11Vq8c4lr9cua7M1"/>
+              <circle cx="86" cy="95" r="1.8" fill="#fff" data-page-node-id="WAOlrkIb7cpZqU6IsTrzuH"/>
+              <circle cx="112" cy="95" r="1.8" fill="#fff" data-page-node-id="VQJ4vHCouhs8JuENHCWzzP"/>
+              <path d="M84 116a9 7 0 0 0 18 0" stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round" data-page-node-id="0ZRE7BJBlvx6EarG8z8fCF"/>
+              <ellipse cx="70" cy="112" rx="5" ry="3.2" fill="#ffd166" opacity=".55" data-page-node-id="F9WefMEzG1rYcvTpyUDVhd"/>
+              <ellipse cx="124" cy="112" rx="5" ry="3.2" fill="#ffd166" opacity=".55" data-page-node-id="avyCsl1kbApesQBJ8RanU3"/>
+              <text x="110" y="136" text-anchor="middle" fill="#fff" font-size="11" font-family="Microsoft YaHei" opacity=".9" data-page-node-id="UVV0dNmfLiRLxFalI7VdBs">光影电影</text>
+              <g fill="#ffd166" data-page-node-id="Dnmmz1HK0fG5mCSPwezfX2">
+                <polygon points="30,40 33,47 40,50 33,53 30,60 27,53 20,50 27,47" data-page-node-id="kb03nQ1F2xX84RJLuqIB6v"/>
+                <polygon points="190,32 192,37 197,39 192,41 190,46 188,41 183,39 188,37" data-page-node-id="oYsufFcx8NiYZmmy6Gmr2q"/>
+                <polygon points="196,150 198,155 203,157 198,159 196,164 194,159 189,157 194,155" data-page-node-id="7sS0rkai7vpVY2CzNLNGHd"/>
+              </g>
+              <g fill="#fff" opacity=".85" data-page-node-id="pNflDvEBo12SLk4aWQEERX">
+                <polygon points="42,120 43.5,124 47.5,125.5 43.5,127 42,131 40.5,127 36.5,125.5 40.5,124" data-page-node-id="ow0VscSpMC1Apv21xUEqXP"/>
+              </g>
+            </svg>
+            <div class="brand-title" data-page-node-id="tOsRC5QzGUCgByoTQDEXic">光影票务</div>
+            <div class="brand-sub" data-page-node-id="NZdztl9pnGN4PtCFU9JcBO">电影票售票系统</div>
+          </div>
+          <div class="login-form" data-page-node-id="ZMpFQJwJhdK98WcvIOMTrD">
+            <h2 class="form-title" data-page-node-id="TJs0iC1S9y1PhA5msr7oLj">登录</h2>
+            <label class="fld" data-page-node-id="ExxWuU0hlRLDjpd5jEclXs">用户名</label>
+            <input id="oldUser" class="inp" value="customer" autocomplete="off" data-page-node-id="5atWfxQrD1k9NsmQLmRgB9">
+            <label class="fld" style="margin-top:14px" data-page-node-id="OlZiDyp9RglFw4eLYl8Dej">密码</label>
+            <input id="oldPass" type="password" class="inp" value="123456" autocomplete="off" data-page-node-id="tN9XQWGtxONkT6jDnne4Ew">
+            <div class="err-line" id="oldErr" data-page-node-id="yaPXHFclZohOflbEGgCF9F"> </div>
+            <button class="blk-btn primary" id="oldBtn" data-page-node-id="qXQnjJ0othlttR0sOkHtTn">登录</button>
+            <button class="blk-btn text" data-page-node-id="tPQC6FlL9jK64j0ALv8Ean">创建账号</button>
+          </div>
+          <div class="enter-flag" data-page-node-id="kvDwoiJxLWIqIvnNW1GjoT">回车无反应</div>
+        </div>
+      </div><div class="zoom-badge" data-page-node-id="3VwkVzmi0S3NHrHz5Nocry"></div></div>
+    </div>
+
+    <div class="col" data-page-node-id="F6EZKUmZk9s5SKoEx0N9AI">
+      <div class="col-head" data-page-node-id="O6eO99LILEqJRJFSky1aGB"><span class="tagx new" data-page-node-id="CXR4A4zFw2Qil0TnI2lwOt">改进后</span>回车即提交<span class="hint" data-page-node-id="AUp8nIrT5YiJ7AAb0ksTf3">清空任一字段再按回车试试</span></div>
+      <div class="shell" data-base="1180" data-page-node-id="rSnEPVI5Mu5kJqXyjXdEwm"><div class="shell-inner" data-page-node-id="jTlGmjxUUwqmaoRB4FM9Nx">
+        <div class="login-shell" data-page-node-id="Fh7gBSI8L64lBCH3jKmKqJ">
+          <div class="login-brand" data-page-node-id="bco1MXpZotdqW5XV68roCn">
+            <svg class="mascot" viewBox="0 0 220 220" data-page-node-id="U9aHCIySLA1vFfe9yLnZu3">
+              <defs data-page-node-id="Vgnbk2dPj9Ds8WMPMIdyHN">
+                <linearGradient id="beam2" x1="0" y1="0" x2="0" y2="1" data-page-node-id="KXRNhHRKXneU5pq3112pCR">
+                  <stop offset="0" stop-color="#ffd166" stop-opacity=".30" data-page-node-id="3mCrrzo7z0rDsx9vUPaVi8"/>
+                  <stop offset="1" stop-color="#ffd166" stop-opacity="0" data-page-node-id="5NpqsN60nUE79QRGo7nbvI"/>
+                </linearGradient>
+                <linearGradient id="tk2" x1="0" y1="0" x2="1" y2="1" data-page-node-id="WatfibabVYG7Yhr0tqnYFJ">
+                  <stop offset="0" stop-color="#e31836" data-page-node-id="ibrlgjXqoGRGgi8YbynlFR"/><stop offset="1" stop-color="#ff7300" data-page-node-id="Va0xcnq4pGYDMxtdy3Dgn0"/>
+                </linearGradient>
+              </defs>
+              <polygon points="76,0 96,0 108,120 84,120" fill="url(#beam2)" data-page-node-id="0gqhfXwsJ7H7oz1ARRazig"/>
+              <polygon points="124,0 142,0 138,120 114,120" fill="url(#beam2)" data-page-node-id="qjYlNlfZLiqLhY69wR8a5C"/>
+              <rect x="52" y="62" width="116" height="96" rx="16" fill="url(#tk2)" data-page-node-id="JX5dVzYLpiSHOy4ml3NDBI"/>
+              <g fill="#ffffff" opacity=".92" data-page-node-id="ZboyiFtvg0ctWdcagyWAKo">
+                <rect x="62" y="76" width="7" height="11" rx="2" data-page-node-id="eDjKQ4TsBQVKOyAHRhbEip"/><rect x="62" y="95" width="7" height="11" rx="2" data-page-node-id="3BpWroMRoZVR5qKdVBCS9t"/><rect x="62" y="114" width="7" height="11" rx="2" data-page-node-id="HWqpbwTPL1YkmGA7eFXQwo"/><rect x="62" y="133" width="7" height="11" rx="2" data-page-node-id="4Wzv2aIncatLBW9UtQDeBk"/>
+                <rect x="151" y="76" width="7" height="11" rx="2" data-page-node-id="oZmzAF77TBhLCcMskL6Tin"/><rect x="151" y="95" width="7" height="11" rx="2" data-page-node-id="nHe04HEMibqCPHrTuLiL3E"/><rect x="151" y="114" width="7" height="11" rx="2" data-page-node-id="76cQCptLADBYSs7KtWBW74"/><rect x="151" y="133" width="7" height="11" rx="2" data-page-node-id="1o9IbnOFMFQdOZMSZfhCZ3"/>
+              </g>
+              <ellipse cx="82" cy="96" rx="9" ry="10" fill="#fff" data-page-node-id="DyFnPsPzOuM7cY4fW0yuzO"/>
+              <ellipse cx="112" cy="96" rx="9" ry="10" fill="#fff" data-page-node-id="SSyEKPACQyGRMkK2BKNaie"/>
+              <circle cx="84" cy="98" r="5" fill="#2a1e2e" data-page-node-id="yQocE3ZDIVeYabHdvqUAgW"/>
+              <circle cx="110" cy="98" r="5" fill="#2a1e2e" data-page-node-id="06PdWOnRcXjuyVi0rymRKA"/>
+              <circle cx="86" cy="95" r="1.8" fill="#fff" data-page-node-id="QEFucGY2nAmN0KZ1ZaXfYP"/>
+              <circle cx="112" cy="95" r="1.8" fill="#fff" data-page-node-id="aiTbYjZyax3Z5fK4XD2y8F"/>
+              <path d="M84 116a9 7 0 0 0 18 0" stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round" data-page-node-id="RpNi7sHxLMNwMbH2Eg9lNM"/>
+              <ellipse cx="70" cy="112" rx="5" ry="3.2" fill="#ffd166" opacity=".55" data-page-node-id="7EQQpLufmP5Eo1fhL5epM1"/>
+              <ellipse cx="124" cy="112" rx="5" ry="3.2" fill="#ffd166" opacity=".55" data-page-node-id="Kw7W8CVgKyNd8Pv3qQnQDv"/>
+              <text x="110" y="136" text-anchor="middle" fill="#fff" font-size="11" font-family="Microsoft YaHei" opacity=".9" data-page-node-id="JZXnwBuUrAo4eSCYHr3CTa">光影电影</text>
+              <g fill="#ffd166" data-page-node-id="P9ZgGIxr8WNZZYPOEPEzSD">
+                <polygon points="30,40 33,47 40,50 33,53 30,60 27,53 20,50 27,47" data-page-node-id="l2C44kKfxFklTBCMFtGHUO"/>
+                <polygon points="190,32 192,37 197,39 192,41 190,46 188,41 183,39 188,37" data-page-node-id="Za0PC9Giko1vw1AGSB7j5Z"/>
+                <polygon points="196,150 198,155 203,157 198,159 196,164 194,159 189,157 194,155" data-page-node-id="LNadnSfg0NGs251KWaYuOY"/>
+              </g>
+              <g fill="#fff" opacity=".85" data-page-node-id="192sRaQGWHlKBELX4NFzdS">
+                <polygon points="42,120 43.5,124 47.5,125.5 43.5,127 42,131 40.5,127 36.5,125.5 40.5,124" data-page-node-id="gHVU1uadHytGMph2zZOTYE"/>
+              </g>
+            </svg>
+            <div class="brand-title" data-page-node-id="gmGrvTO0DJjRGaCHYnOUr7">光影票务</div>
+            <div class="brand-sub" data-page-node-id="LtvosuChUESI5Btf6fXGzf">电影票售票系统</div>
+          </div>
+          <div class="login-form" data-page-node-id="bSgMwvSOMZD9laVCk0jNor">
+            <h2 class="form-title" data-page-node-id="JUGba8jysdzSg8qHX73Hyy">登录</h2>
+            <label class="fld" data-page-node-id="mlQS2G1OHanJ8tyCATOjsV">用户名</label>
+            <input id="newUser" class="inp" value="customer" autocomplete="off" data-page-node-id="JvY0mpm9hvAxpfap00e3Yn">
+            <label class="fld" style="margin-top:14px" data-page-node-id="tC9b3sUWPPGpeGyhKCnTNx">密码</label>
+            <input id="newPass" type="password" class="inp" value="123456" autocomplete="off" data-page-node-id="tnc2TU3Rad8Mvv3OFoQXGK">
+            <div class="err-line" id="newErr" data-page-node-id="hlQLZZjDTQFOZ1LSBY32eD"> </div>
+            <button class="blk-btn primary" id="newBtn" data-page-node-id="MN5sSmOhq682h1coSib9pv">登录</button>
+            <button class="blk-btn text" data-page-node-id="C9SbgzQH2lfCGWa6KCnmuz">创建账号</button>
+          </div>
+          <div class="enter-flag ok" data-page-node-id="GOq1lI1CfHsj5lbWyGyg5I">回车即提交</div>
+        </div>
+      </div><div class="zoom-badge" data-page-node-id="6tpIDPTJXllIplQx03Ymif"></div></div>
+    </div>
+  </div>
+  <div class="note" data-page-node-id="YsinP5De0SfY22A3Hozi2K">
+    <span class="mk" data-page-node-id="sIaeOVRBDUbK1r8JJEwJZc">说明</span>
+    <span data-page-node-id="PMuP1jjJFvQIGHLkr2tIEL">当前版本整个项目没有任何 <code data-page-node-id="eKaPLGR1NVBZ05RmWDGzJe">setDefaultButton</code> 调用，所以输入框按回车不会触发登录。改进后两个输入框都监听回车键，同时加了字段级校验 —— 空字段直接标红提示，不必等后端抛异常再弹窗。</span>
+  </div>
+</section>
+
+<!-- ══════════════════ TAB 2 · 导航 ══════════════════ -->
+<section class="panel hidden" data-tab="nav" data-page-node-id="PkoxfTdEQb9V5kGf8eLUqu">
+  <div class="panel-intro" data-page-node-id="OQhclSSp0EcG7Glt1Zw7no">
+    <div class="bad" data-page-node-id="OkKhVwiiMzn8tcjqTGg5hw">现状：顾客端顶部导航和后台左侧菜单都没有「当前在哪」的选中高亮，鼠标移上去也没有任何反馈。后台尤其明显 —— 点「影片管理」和点「影厅管理」视觉上完全一样。</div>
+    <div class="good" data-page-node-id="N7BBDtAhNTNG286pbj8X1w">改进：当前项用主色文字 + 浅橙底 + 主色指示条三重标记，悬停时同步变色，让用户随时知道自己在哪个模块。</div>
+  </div>
+
+  <h3 style="font-size:14px;font-weight:500;margin:20px 0 12px;color:var(--ink-soft)" data-page-node-id="NBp9l5YCuenKd0rJ5pqeHT">① 顾客端顶部导航</h3>
+  <div class="cmp" data-page-node-id="s44vnnwAQsgDxRZPOZC2do">
+    <div class="col" data-page-node-id="wuBblDA2SRZSNpt4hsBLKi">
+      <div class="col-head" data-page-node-id="5l1YzihmMvvdwHtICJpGDA"><span class="tagx old" data-page-node-id="k3dFWpiCLSgxpPDrZJtnwC">当前</span>点击无高亮、悬停无反馈<span class="hint" data-page-node-id="hg1u4M5FlGN2LrQEtV5jRw">点几个 tab 试试</span></div>
+      <div class="shell" data-base="1180" data-page-node-id="30XHNaQwYBMHMR6gIk1iWN"><div class="shell-inner" data-page-node-id="4UDPea02emVwd50zHgYPql">
+        <div class="topbar old" data-active="home" data-page-node-id="CkVzo1HIToukGhrffAG264">
+          <div class="tb-brand" data-page-node-id="ySWDDWPV8wb6JCtZTmpaBb">
+            <svg viewBox="0 0 24 24" class="ic-lg" data-page-node-id="iNgWmFMQQSzCx95lF8fD8z"><rect x="2.5" y="5" width="19" height="14" rx="2.5" data-page-node-id="pMEQ0yEX0AZVsXnXJEZdLH"/><line x1="7" y1="5" x2="7" y2="19" data-page-node-id="t4pCnWESYRQRVHNE0YqA8r"/><line x1="17" y1="5" x2="17" y2="19" data-page-node-id="YanqyYFyQ6pEV8zr47KA3A"/><line x1="2.5" y1="9.5" x2="7" y2="9.5" data-page-node-id="AvtXyjIW5PKzomfXMdeFoC"/><line x1="2.5" y1="14.5" x2="7" y2="14.5" data-page-node-id="w5ES66RqcQCXHZuovSRpkA"/><line x1="17" y1="9.5" x2="21.5" y2="9.5" data-page-node-id="q3fUPcPJwezExRm3dDp4ah"/><line x1="17" y1="14.5" x2="21.5" y2="14.5" data-page-node-id="U48yb6XVhTjgo5YPdVE0WL"/></svg>
+            <span data-page-node-id="Htu7usI9ejmOhBvNAqf3GJ">光影票务</span>
+          </div>
+          <div class="tb-search" data-page-node-id="H94G81d65zBZDhBW7abTnG"><input placeholder="搜索影片名称、类型或导演" data-page-node-id="uqGGaEOCNaV7sh6jLDf4X0"><button class="tb-go" data-page-node-id="0BzXuHBLrXFAyOFwFGson5"><svg viewBox="0 0 24 24" data-page-node-id="19gAINOMpLw0uLyekVZX7O"><circle cx="10.5" cy="10.5" r="4.8" data-page-node-id="q30scK5wzvDFpazPpTjnC7"/><line x1="14.2" y1="14.2" x2="18" y2="18" data-page-node-id="lHDtaAQZLoR2yzF52juwp5"/></svg></button></div>
+          <nav class="tb-nav" data-page-node-id="AH1v4J2wPbE2lZCArE9ZCU">
+            <a class="nav-item on" data-k="home" data-page-node-id="YIC5ZlfZmcy87UZunYbLnf"><svg class="ic" viewBox="0 0 24 24" data-page-node-id="YJCosUtbq18Mq7saZ11iyt"><rect x="2.5" y="5" width="19" height="14" rx="2.5" data-page-node-id="BsWGMP56V0irUNabdl2Npn"/><line x1="7" y1="5" x2="7" y2="19" data-page-node-id="I2Eh5rw3lg48DQwGLdoKKm"/><line x1="17" y1="5" x2="17" y2="19" data-page-node-id="ofEPBpESrPTjoy8unCvaB8"/><line x1="2.5" y1="9.5" x2="7" y2="9.5" data-page-node-id="hOVaQcUkLthyHZZ9VqTz6M"/><line x1="2.5" y1="14.5" x2="7" y2="14.5" data-page-node-id="68wRmTuTMXKdGcwuuA0lOy"/><line x1="17" y1="9.5" x2="21.5" y2="9.5" data-page-node-id="3ww8qpO0VwUuUQrbZiKuLf"/><line x1="17" y1="14.5" x2="21.5" y2="14.5" data-page-node-id="JigBMWkxdmxBw5nNAlcqvQ"/></svg><span data-page-node-id="hvwzMlyXJrEbvZlgmggUUY">影片</span></a>
+            <a class="nav-item" data-k="orders" data-page-node-id="wdGVg3g1pnUUhFN13wG0Jn"><svg class="ic" viewBox="0 0 24 24" data-page-node-id="LNUTsXV1HCG8E0Jxs32Wyg"><path d="M3.5 8.2V6.5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v1.7a2.3 2.3 0 0 0 0 4.6v1.7a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-1.7a2.3 2.3 0 0 0 0-4.6z" data-page-node-id="IMMP4OfyNTTXFJOOFGUq9K"/><line x1="13.5" y1="5" x2="13.5" y2="19" stroke-dasharray="2 2.4" data-page-node-id="9zZCs6a0ku8vptbzSuSyMX"/></svg><span data-page-node-id="hvFSFNgTDKS6LukiOBZjBR">我的订单</span></a>
+            <a class="nav-item" data-k="member" data-page-node-id="1E9A3jbQdnGjWr9KWiRVRm"><svg class="ic" viewBox="0 0 24 24" data-page-node-id="jT0HVX4Rx2n4jA6bj4Sv4I"><polygon points="12,3.2 14.9,9.2 21.5,10.1 16.7,14.7 17.9,21.2 12,18.1 6.1,21.2 7.3,14.7 2.5,10.1 9.1,9.2" data-page-node-id="CnGnAMDT1r3RNbcQCmQyo0"/></svg><span data-page-node-id="L3ae58fL6wKFhoheEWUYcl">我的会员</span></a>
+            <a class="nav-item" data-k="cart" data-page-node-id="Kbu7mYrZMwBFpt76acLHUO"><svg class="ic" viewBox="0 0 24 24" data-page-node-id="DElBAsfrh8diLxFyR1ojkV"><path d="M3 4.5h2.3l2.2 10.3h9.6" data-page-node-id="quYkFbPn4tapySTEHS1uCU"/><path d="M6.4 7.8h13.3l-1.5 5.4H7.6" data-page-node-id="vWUuBb2T1mUgYK15fsZpOO"/><circle cx="9.4" cy="19" r="1.6" data-page-node-id="fCuRr3s43pi1mzZelD8v23"/><circle cx="16.6" cy="19" r="1.6" data-page-node-id="NtmEoXt5VZUKe4J43xAOtU"/></svg><span data-page-node-id="AnEbwrfQyfRHJawspa2zyh">购物车（2）</span></a>
+            <a class="nav-item" data-k="exit" data-page-node-id="hybbApcazZSat0xQTuOrN7"><svg class="ic" viewBox="0 0 24 24" data-page-node-id="lUZHwe5hvKpxdXGcDQ1z5Y"><circle cx="12" cy="8" r="4" data-page-node-id="Mr79ooLj09RJmzXwWaxsO1"/><path d="M4.8 20.5a7.2 7.2 0 0 1 14.4 0" data-page-node-id="pc2DQy4dqB8swEsYuSSSjq"/></svg><span data-page-node-id="k7qkslCJlxgVWNeeyR4EGk">退出</span></a>
+          </nav>
+        </div>
+      </div><div class="zoom-badge" data-page-node-id="RLmwd0hBiLBmlUP8IRNUlA"></div></div>
+    </div>
+
+    <div class="col" data-page-node-id="QCBCDWZ7V78GVHVZm6GqZE">
+      <div class="col-head" data-page-node-id="V6CSxEUouAAR1YlNbd3WHD"><span class="tagx new" data-page-node-id="nONlKq62Sbh1p3QKyzs00V">改进后</span>主色高亮 + 悬停变色 + 指示条<span class="hint" data-page-node-id="mCwX47qE0ZtitXpuuMIyPQ">点几个 tab 试试</span></div>
+      <div class="shell" data-base="1180" data-page-node-id="y6rYkUtDVzPbbWFAxh263N"><div class="shell-inner" data-page-node-id="AZWfS45HItIQAIeXqiXCj5">
+        <div class="topbar" data-active="home" data-page-node-id="nGOngTNUgW7okoUTSfxO6S">
+          <div class="tb-brand" data-page-node-id="ddpjWXRlq7cfrocnp1s2SM">
+            <svg viewBox="0 0 24 24" class="ic-lg" data-page-node-id="R1z9iLeO69pBPAT66gmsI3"><rect x="2.5" y="5" width="19" height="14" rx="2.5" data-page-node-id="gC3kbgC7gPpEsSUkBqOFgk"/><line x1="7" y1="5" x2="7" y2="19" data-page-node-id="S2DLzJ6XMp4mMrt12dZVmg"/><line x1="17" y1="5" x2="17" y2="19" data-page-node-id="IfIo52sdm7FBVA3cmtBDB6"/><line x1="2.5" y1="9.5" x2="7" y2="9.5" data-page-node-id="EivCpB4btaGurz3gretr1P"/><line x1="2.5" y1="14.5" x2="7" y2="14.5" data-page-node-id="tzHXU9zHi0YB2Ny3PeU0Vh"/><line x1="17" y1="9.5" x2="21.5" y2="9.5" data-page-node-id="slTzpsLfZi4Jh4AOnXLqUA"/><line x1="17" y1="14.5" x2="21.5" y2="14.5" data-page-node-id="gD4x094JRH9wYsSDTRHySC"/></svg>
+            <span data-page-node-id="kMRqqvOK6WJhkyQEjAvkik">光影票务</span>
+          </div>
+          <div class="tb-search" data-page-node-id="vBYnRRiCXwTldNATWpQAJT"><input placeholder="搜索影片名称、类型或导演" data-page-node-id="W6IRcMUxIEXe25gkvvWYPa"><button class="tb-go" data-page-node-id="hhenePKkrGUUN5xmL05OAk"><svg viewBox="0 0 24 24" data-page-node-id="aQxQTYn2724RePwyxwO7zn"><circle cx="10.5" cy="10.5" r="4.8" data-page-node-id="Id7Z3VSV3pHBByKkwieegH"/><line x1="14.2" y1="14.2" x2="18" y2="18" data-page-node-id="6TFaq1Il1BtStXZWQaR1JD"/></svg></button></div>
+          <nav class="tb-nav" data-page-node-id="NcPH0YGCh9oieUFhAGejhA">
+            <a class="nav-item on" data-k="home" data-page-node-id="2Qhkc5mR5uHnDexyqrBQap"><svg class="ic" viewBox="0 0 24 24" data-page-node-id="S6jnynVb9BlPKk9PcTA4xt"><rect x="2.5" y="5" width="19" height="14" rx="2.5" data-page-node-id="Ord813GRCBBo3BrOk7uTbN"/><line x1="7" y1="5" x2="7" y2="19" data-page-node-id="K4PFz1DTU5pDL8fheaFJWV"/><line x1="17" y1="5" x2="17" y2="19" data-page-node-id="olOBXjjX2hQDPZgdcfhlZG"/><line x1="2.5" y1="9.5" x2="7" y2="9.5" data-page-node-id="hssj1JQESyNe2tiuuLmKFP"/><line x1="2.5" y1="14.5" x2="7" y2="14.5" data-page-node-id="3Z3WnrgrFW9u0AD72HzSep"/><line x1="17" y1="9.5" x2="21.5" y2="9.5" data-page-node-id="jyF8Dvusc97ilQRu7aeg3B"/><line x1="17" y1="14.5" x2="21.5" y2="14.5" data-page-node-id="j7morWZCDEB6LOgdVQIkvJ"/></svg><span data-page-node-id="EkrV2QQECc6t3uCrTwMgc3">影片</span></a>
+            <a class="nav-item" data-k="orders" data-page-node-id="JEFAuAKcI1SbU2d6dRvH8X"><svg class="ic" viewBox="0 0 24 24" data-page-node-id="wVYNV9bx7MKPcSW7cWN9Ag"><path d="M3.5 8.2V6.5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v1.7a2.3 2.3 0 0 0 0 4.6v1.7a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-1.7a2.3 2.3 0 0 0 0-4.6z" data-page-node-id="VcLjOaQVLN5whIBX1s0zbO"/><line x1="13.5" y1="5" x2="13.5" y2="19" stroke-dasharray="2 2.4" data-page-node-id="hH6ZcMLvqj0hlchmaZBeDv"/></svg><span data-page-node-id="BSZlgJFUYjdXGf8kmRPMbx">我的订单</span></a>
+            <a class="nav-item" data-k="member" data-page-node-id="Zzj5zQ7cuYNH5zO1r6YHJU"><svg class="ic" viewBox="0 0 24 24" data-page-node-id="XS6XAZiICZ3Ci3GuFq5mlN"><polygon points="12,3.2 14.9,9.2 21.5,10.1 16.7,14.7 17.9,21.2 12,18.1 6.1,21.2 7.3,14.7 2.5,10.1 9.1,9.2" data-page-node-id="YAhMuxnsi9BBS6UKeDtzDO"/></svg><span data-page-node-id="vvOKSkJCCL2FbY0HC1zyHO">我的会员</span></a>
+            <a class="nav-item" data-k="cart" data-page-node-id="CtkFmD7EbuS2e4FHN3Qoj8"><svg class="ic" viewBox="0 0 24 24" data-page-node-id="gRs2JHGUvaKzcoU1INNZt5"><path d="M3 4.5h2.3l2.2 10.3h9.6" data-page-node-id="7JFdZBZj2f8wO0zHPrHNyQ"/><path d="M6.4 7.8h13.3l-1.5 5.4H7.6" data-page-node-id="4BvXKj6cyrxxxaCbY7V44n"/><circle cx="9.4" cy="19" r="1.6" data-page-node-id="KTIZ2DiPVOU1ELvesBhnkk"/><circle cx="16.6" cy="19" r="1.6" data-page-node-id="eKekHbWCFoY93sFxjZr3kX"/></svg><span data-page-node-id="F6YaxBRWHJyaftb0TFHgHV">购物车（2）</span></a>
+            <a class="nav-item" data-k="exit" data-page-node-id="nyDfrlH9WeNyMyMWUsoFow"><svg class="ic" viewBox="0 0 24 24" data-page-node-id="ZNZRia6UzK0dtgXxUHXSGO"><circle cx="12" cy="8" r="4" data-page-node-id="WjJGQavliBIDCB4AgzbEEg"/><path d="M4.8 20.5a7.2 7.2 0 0 1 14.4 0" data-page-node-id="ynLziJXCHzieTJyzYHdJyO"/></svg><span data-page-node-id="AdlLJiE0UyxbeZowXZ8ThC">退出</span></a>
+          </nav>
+        </div>
+      </div><div class="zoom-badge" data-page-node-id="ccYSFjE6Fp6K1uQuk1I9pP"></div></div>
+    </div>
+  </div>
+
+  <h3 style="font-size:14px;font-weight:500;margin:28px 0 12px;color:var(--ink-soft)" data-page-node-id="BQEEYX1HlklYiFvWtHfUyv">② 后台管理端左侧栏</h3>
+  <div class="cmp" data-page-node-id="RLes16kWOPAUriBCfhLP0d">
+    <div class="col" data-page-node-id="ROpb6cG85mOf9D0nftKiu1">
+      <div class="col-head" data-page-node-id="GfISMfTPTfppi90o5EjcuC"><span class="tagx old" data-page-node-id="LUfxUheh0d9rwFMOr0j9iZ">当前</span>选中项无任何标记<span class="hint" data-page-node-id="v0FVgHHr0M1WzF9Ys5a7ot">点几个菜单试试</span></div>
+      <div class="shell" data-base="1180" data-page-node-id="rAg4cHByiJmXJmLs9kKKyy"><div class="shell-inner" data-page-node-id="UxtytZFolIDLXsZOmS4LGU">
+        <div class="admin-shell old" data-page-node-id="8EY7NbR6ibXe4lLFrf6i97">
+          <div class="admin-head" data-page-node-id="uacgDSLyDwtOht6rH4w37F"><span class="admin-brand" data-page-node-id="BE1CxvzH11YRdz8WTRhqEg">光影票务 · 管理后台</span><span class="admin-right" data-page-node-id="b0bd3sfyb336EYRtalrAI7">管理员：李经理 <b data-page-node-id="4Cnrzf7wbYnXnJWWJHrBau">退出</b></span></div>
+          <div class="admin-body" data-page-node-id="PZhwSbKlGMpDvUvaTl9B6N">
+            <aside class="sidebar" data-page-node-id="i2AAuHtlyTiHeSLfr8BFIU">
+              <a class="side-item on" data-k="customers" data-page-node-id="SHhCNeLjkBXwmsutOPJnye">顾客管理</a>
+              <a class="side-item" data-k="movies" data-page-node-id="fmR7VInhLNVSygrxXAJ7TX">影片管理</a>
+              <a class="side-item" data-k="halls" data-page-node-id="R9XEapIddLSCfvcZcUSUZc">影厅管理</a>
+              <a class="side-item" data-k="sessions" data-page-node-id="BB72vGMJ2iOPlklZIr1D4F">场次管理</a>
+              <a class="side-item" data-k="orders" data-page-node-id="fhCKHtLByEA9vY5I7zC6Od">订单管理</a>
+            </aside>
+            <main class="admin-main" data-page-node-id="g3YxyYVmdW9HQZlXIPRpzz"><div class="ph" data-page-node-id="zVIFeLwbCaxD9gcm7nknwH">模块内容区</div></main>
+          </div>
+        </div>
+      </div><div class="zoom-badge" data-page-node-id="nI7vmnDsqyuv7OIiXP6af6"></div></div>
+    </div>
+    <div class="col" data-page-node-id="6hCFABOi57K5vwuovT8qpU">
+      <div class="col-head" data-page-node-id="piCTBG3W1r02GpDnCLz78t"><span class="tagx new" data-page-node-id="wGXt0CQZSb3Wt9vAf7HJqJ">改进后</span>浅橙底 + 主色左边条<span class="hint" data-page-node-id="xGtMOsr0xIv83UqvSgBqMj">点几个菜单试试</span></div>
+      <div class="shell" data-base="1180" data-page-node-id="RYAkk58LGTBQy1FLeAGIPg"><div class="shell-inner" data-page-node-id="U3QXJXeVkgh8HrQXckJ9zC">
+        <div class="admin-shell" data-page-node-id="D0E5J7ZR8HwfFWlavMnAhI">
+          <div class="admin-head" data-page-node-id="tje87rmuwMcojrDa5Wo4eB"><span class="admin-brand" data-page-node-id="r7TZweeR9egBXEolqdLCkC">光影票务 · 管理后台</span><span class="admin-right" data-page-node-id="lk8x1uBZaVSO1lb0iGu5jV">管理员：李经理 <b data-page-node-id="vHYfKDRLp4WWjNODEVk7W8">退出</b></span></div>
+          <div class="admin-body" data-page-node-id="DcFHTHDAvQjzJ1nSyOfakP">
+            <aside class="sidebar" data-page-node-id="OiT96F4SI251YXmgYmHLTu">
+              <a class="side-item on" data-k="customers" data-page-node-id="9LvWtcveirQXxzOa6Dq1qz">顾客管理</a>
+              <a class="side-item" data-k="movies" data-page-node-id="jWw6cMhqQsIibZGzwBc42A">影片管理</a>
+              <a class="side-item" data-k="halls" data-page-node-id="t5j1Qa72qiEreKpG5dypgF">影厅管理</a>
+              <a class="side-item" data-k="sessions" data-page-node-id="XdX7oBl8qVNDHEzZ4BA0lO">场次管理</a>
+              <a class="side-item" data-k="orders" data-page-node-id="ogQ96J51VUyo1dvmeVQ8TV">订单管理</a>
+            </aside>
+            <main class="admin-main" data-page-node-id="oXM2O5m6QCMRIGKlKkQz0x"><div class="ph" id="adminPh" data-page-node-id="9n6liPv62knboYHin4RHEn">顾客管理</div></main>
+          </div>
+        </div>
+      </div><div class="zoom-badge" data-page-node-id="ko6DmcFfYObGwh3pVv2wGi"></div></div>
+    </div>
+  </div>
+  <div class="note" data-page-node-id="WWspwCcJ70HdsA47gcMIyb">
+    <span class="mk" data-page-node-id="B8E694k2IoaTxNTv3L2F79">说明</span>
+    <span data-page-node-id="DA5jPONoLHLPAuEffrL9n7">当前版本顾客端导航虽然在 <code data-page-node-id="gy8SiP5Hifwa24ggAfGAde">mouseEntered</code> 里设置了手型光标、也能点，但文字和图标颜色始终不变；后台侧栏更是连手型光标都没有反馈。改进后统一用 <code data-page-node-id="HCdA2wipoZhwHaPCfQCjmr">--primary-soft</code>（<code data-page-node-id="ZGcVYKknBmNBb46dSbixTK">#33291F</code>）做悬停/选中底色，这个色值项目里已有，直接复用。</span>
+  </div>
+</section>
+
+<!-- ══════════════════ TAB 3 · 表格空状态 ══════════════════ -->
+<section class="panel hidden" data-tab="table" data-page-node-id="yp8jgN6BjnuMDKbtvwO8iy">
+  <div class="panel-intro" data-page-node-id="d422WpQov15dtxLWocZaU7">
+    <div class="bad" data-page-node-id="uEZWwBvXbOpr46kHPwCnms">现状：后台 5 个管理模块的表格都没有空状态处理。搜索无结果时只剩一行表头，下面是一片空白，用户会以为页面坏了。</div>
+    <div class="good" data-page-node-id="zVsPBNKdTtKtpGzJze91PE">改进：表体区域显示居中占位（图标 + 「暂无数据」+ 当前筛选条件 + 清空筛选按钮），表头保留可见，用户知道「是筛没了」而不是「加载失败」。</div>
+  </div>
+
+  <div class="ctrl-bar" data-page-node-id="kHZtYCEuYfzpw9guIhCRNY">
+    <span class="ctrl-label" data-page-node-id="u6YoGJfIL2DTMdycDuiAVP">演示控制</span>
+    <button class="tab on" id="btnHasData" data-page-node-id="cRr8vYzp0XJZA5DQEKi0Ed">有数据</button>
+    <button class="tab" id="btnNoData" data-page-node-id="ElmzHQxHbtw2XU3ENrsieq">强制无数据</button>
+    <span class="ctrl-tip" data-page-node-id="9Zce3cpzoXKvIC1HA362R1">或在右侧输入框里输入 <code data-page-node-id="u9qA8VxKZPXRLpndSRZoBK">zzz</code> 之类的关键词实时触发</span>
+  </div>
+
+  <div class="cmp" data-page-node-id="2LmUXwhlGiMqGvoAmVVGaX">
+    <div class="col" data-page-node-id="Gbz4v2Ab6G2IphZ7N29KY0">
+      <div class="col-head" data-page-node-id="JYuh0egpFS0s6UrJDZpXSt"><span class="tagx old" data-page-node-id="3YEM9fXkvgVxWVL3H3eQlV">当前</span>搜索无结果 → 空白表体</div>
+      <div class="shell" data-base="1180" data-page-node-id="9YMbnl0Wyi8bvbNhIVlyX5"><div class="shell-inner" data-page-node-id="DG0gXyMOVF3YYSAUunpE0X">
+        <div class="admin-shell" id="tblOld" data-page-node-id="W2XVmKksJE1LHYODoy0M1T">
+          <div class="admin-head" data-page-node-id="rMtzxZKGeCCtjH1omWYTsf"><span class="admin-brand" data-page-node-id="KxA0JlhrdjuqEXQ3DGxyHU">光影票务 · 管理后台</span><span class="admin-right" data-page-node-id="6hFtm1KRvjulWvFhDOW6x2">管理员：李经理 <b data-page-node-id="jELWW44m4MF9uTnYZg6rci">退出</b></span></div>
+          <div class="admin-body" data-page-node-id="F8vh5vl965BtcgIO2wXbaD">
+            <aside class="sidebar" data-page-node-id="sxuA6gmGoAacUS4SbzRpvD">
+              <a class="side-item on" data-page-node-id="8x1QgqkvfTbszheHXWXpey">顾客管理</a>
+              <a class="side-item" data-page-node-id="cYdMBOy5jHRLqSZIMUs5Q5">影片管理</a>
+              <a class="side-item" data-page-node-id="MSbWBC6kvmoDSCBJB7UV9B">影厅管理</a>
+            </aside>
+            <main class="admin-main col-main" data-page-node-id="5RyZbr7BqGXkfQSriAcPHM">
+              <div class="toolbar" data-page-node-id="DB90itz6jqcL2tHvYg6i3o">
+                <span class="tb-title" data-page-node-id="DNSmginjhUZeEkqsEYEEzk">顾客管理</span>
+                <div class="tb-actions" data-page-node-id="FC8bl10iuBBBbnu7Al6NLf">
+                  <input class="tbl-search" id="oldKw" placeholder="关键词" data-page-node-id="CIvMefMy3o1n07o6ASNeuU">
+                  <button class="btn-sec" id="oldFind" data-page-node-id="UnqD51dMbBoM1tAUSZDMlJ">查找</button>
+                  <button class="btn-prim" data-page-node-id="WTk3NEF0SFYAo3nk8YVjxU">新增顾客</button>
+                </div>
+              </div>
+              <div class="table-wrap" data-page-node-id="V8F3mz5Xe5j6QZy5NeaK7M">
+                <table class="dtable" data-page-node-id="7Uou45jnKVqDj3tRBY32h3">
+                  <thead data-page-node-id="kXqzdF7vAPn8P6kH0UcEEr"><tr data-page-node-id="V3cl5ziBEhEvpiLDBHyafX"><th style="width:110px" data-page-node-id="2KcORhqamdawvpRGVtdOyW">编号</th><th data-page-node-id="y0MU2qnWmzdRDW7YHlTZuE">用户名</th><th data-page-node-id="S1bcIUshh93e4A4FOjV0f2">姓名</th><th data-page-node-id="tVHOCZer7fcUxe1KyLUD50">会员等级</th></tr></thead>
+                  <tbody id="oldBody" data-page-node-id="RiX8uZEN1ktVzDtJAv2l3m"></tbody>
+                </table>
+                <div class="tbl-empty-old" id="oldNoHint" hidden data-page-node-id="NKXx5uIZUHrQMYhdGW3ArP">这里什么都没有</div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div><div class="zoom-badge" data-page-node-id="tPqHFRkBEPrLXeNMz1NIIV"></div></div>
+    </div>
+
+    <div class="col" data-page-node-id="PpjxDc4yPTcvftFioulSVE">
+      <div class="col-head" data-page-node-id="loSX4IIQIxgAciRP4OD0nU"><span class="tagx new" data-page-node-id="1VfXqH7Hjy1mcrUmHhbEJT">改进后</span>搜索无结果 → 居中占位</div>
+      <div class="shell" data-base="1180" data-page-node-id="5kpq9xEzazNXR8eV0rO2vh"><div class="shell-inner" data-page-node-id="hcW1MhwpvwJQ26VEycoae2">
+        <div class="admin-shell" id="tblNew" data-page-node-id="74bujOAyW7tgWVPVFsLtbO">
+          <div class="admin-head" data-page-node-id="wcaxH1dZfEVhqKT5igzfnn"><span class="admin-brand" data-page-node-id="cY563HdtnD9MVjlIxGSf0y">光影票务 · 管理后台</span><span class="admin-right" data-page-node-id="KoDAj52DIZkBbrbhyGWNwC">管理员：李经理 <b data-page-node-id="SfjHHqQRWJFv2CQaCECBsR">退出</b></span></div>
+          <div class="admin-body" data-page-node-id="f9UkvAYzPVT4IMpz9FEkh0">
+            <aside class="sidebar" data-page-node-id="EWNnzzHQ38sbG5TzEWST2D">
+              <a class="side-item on" data-page-node-id="vaWau2zpES9hCdZRekelCl">顾客管理</a>
+              <a class="side-item" data-page-node-id="Ybahd3pnIyzeYnq4DJhnzH">影片管理</a>
+              <a class="side-item" data-page-node-id="4eGj3yQez3Pk0gl4OMrNR9">影厅管理</a>
+            </aside>
+            <main class="admin-main col-main" data-page-node-id="nWxxaIYTfkFTeBmJXI0IfF">
+              <div class="toolbar" data-page-node-id="guZN25v58gvOfN5MDCD89F">
+                <span class="tb-title" data-page-node-id="1Cz6nAKkW8QiqzpynS8dab">顾客管理</span>
+                <div class="tb-actions" data-page-node-id="zmBGh2WDeW5Pymvlw6DWHX">
+                  <input class="tbl-search" id="newKw" placeholder="关键词" data-page-node-id="jhEWwe3jUpyASCyS8oMNip">
+                  <button class="btn-sec" id="newFind" data-page-node-id="xSxr3uimTuDlbd4rlg3NJi">查找</button>
+                  <button class="btn-prim" data-page-node-id="Gan8piFPFPVaYlZM88XC5C">新增顾客</button>
+                </div>
+              </div>
+              <div class="table-wrap" data-page-node-id="hePWxXr1X3WmlieJatAtNd">
+                <table class="dtable" data-page-node-id="d0YQDIrdHVwhhGTLGkLQFh">
+                  <thead data-page-node-id="GPCjBbhgbt1D6Wusna6whR"><tr data-page-node-id="QluYO2b367rx4U4Cx4OacO"><th style="width:110px" data-page-node-id="7uHefCDIFNJGyeSekebYK9">编号</th><th data-page-node-id="hOnhy8wVaVM4kIldoVb911">用户名</th><th data-page-node-id="FF27dyN1eRiNyS0Akj59Zo">姓名</th><th data-page-node-id="CFtB9pkrPKbjZyAF8HjKVm">会员等级</th></tr></thead>
+                  <tbody id="newBody" data-page-node-id="jQ99JbdnZ8CrUl0V0md7j8"></tbody>
+                </table>
+                <div class="tbl-empty" id="newEmpty" hidden data-page-node-id="wZMoWfnhvzIu9TvdjmGAKf">
+                  <svg class="empty-ic" viewBox="0 0 48 48" data-page-node-id="m8osNMPItvDfxC6VrrwkMi">
+                    <rect x="9" y="7" width="30" height="34" rx="3" data-page-node-id="B4U7oaAiIeoNO4uSpfAFeY"/>
+                    <line x1="16" y1="16" x2="32" y2="16" data-page-node-id="TYlAhDwLH0tsqSZkkXBvDN"/>
+                    <line x1="16" y1="23" x2="32" y2="23" data-page-node-id="WImpnp1G3yYpesG4Wzk2Q6"/>
+                    <line x1="16" y1="30" x2="25" y2="30" data-page-node-id="HLca3GOA3MMLSr8QpACAnY"/>
+                    <circle cx="33" cy="33" r="7.5" fill="var(--surface)" data-page-node-id="kC4lE7UDKQx3lQqLr3kWD4"/>
+                    <line x1="38.4" y1="38.4" x2="43" y2="43" data-page-node-id="BKe3OEXZhw46ogcfY6u0ex"/>
+                    <line x1="30.5" y1="33" x2="35.5" y2="33" data-page-node-id="7Fz0PbNep9MtBPecm6GK4f"/>
+                  </svg>
+                  <h3 data-page-node-id="1QcnJzhMfaeaXJ8HFkQiKv">暂无数据</h3>
+                  <p data-page-node-id="EZBbhPe0TUQE1sFHgIYs7D">没有找到与「<span class="kw" data-page-node-id="byTDLPx3zX3e9q3s9DMJ8e">—</span>」匹配的顾客</p>
+                  <button class="btn-prim" id="newClear" data-page-node-id="BiS8eFxPabH0QBh3WCYMhn">清空筛选</button>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div><div class="zoom-badge" data-page-node-id="rn65BhecYQc4aoOukF3gNK"></div></div>
+    </div>
+  </div>
+  <div class="note" data-page-node-id="syxEFyXjsVZL6HFW8NuAvj">
+    <span class="mk" data-page-node-id="LuktWiM1X2ulBtoajk2Oc3">说明</span>
+    <span data-page-node-id="Gx9PvoHpgBMjUiyUUHpo9e">关键细节：空状态层是<b data-page-node-id="0DE71uNRhmWE2ffYvXo8BH">覆盖在表体区域上</b>而不是替换整张表 —— 表头始终可见。真实缺陷的现象正是「表头还在，下面全空」，所以这个地方要还原得准确，改进后也保留了表头，只是把表体换成占位。</span>
+  </div>
+</section>
+
+<!-- ══════════════════ TAB 4 · 小食区 ══════════════════ -->
+<section class="panel hidden" data-tab="snack" data-page-node-id="Ouh1A2eRsTFGBT7ShwYXeL">
+  <div class="panel-intro" data-page-node-id="8ZQZpo1tATMEIwd4cOmSac">
+    <div class="bad" data-page-node-id="lV2dTF0A6SaqFYOOgkQ6oZ">现状：首页小食区 5 张卡片各带一个橙色「购买」按钮，点了只弹一句「已加入订单（演示）」的提示框 —— 既不进购物车、也不进订单，是个伪装成功能的空实现。</div>
+    <div class="good" data-page-node-id="omiQ9kPK4XyBh1iyzG4XUX">改进：去掉购买按钮，小食区改为纯展示的卖品位；原来的按钮位置换成克重/规格描述，不再给用户「可以买」的错觉。</div>
+  </div>
+
+  <div class="cmp" data-page-node-id="ErQO6aTumGGfGkHNbZF6xH">
+    <div class="col" data-page-node-id="HUqGpNAM1RWqyygJ0n91KS">
+      <div class="col-head" data-page-node-id="CyWLITvtxTmkYkkKDEk6rQ"><span class="tagx old" data-page-node-id="ol4ASH5Y7U2RvMJv237M4W">当前</span>5 张卡都有假的「购买」按钮<span class="hint" data-page-node-id="HwNG6dEb1fWaUHizbHeNDA">点任意一个「购买」</span></div>
+      <div class="shell" data-base="1180" data-page-node-id="j5qaV3VfsSRXCI3IuludZj"><div class="shell-inner" data-page-node-id="ecK1dQ9i4Ovak575MPFacf">
+        <div class="snack-wrap old" data-page-node-id="r0ObfXdwub75dkEwa5sU2v">
+          <div class="sec-title" data-page-node-id="s7hPseimcOwp5s3ZyR7ATh">小食</div>
+          <div class="snack-grid" id="snackOld" data-page-node-id="WBlkMKMWXFG4cunRs8zaLF"></div>
+          <div class="jmodal" id="snackModal" hidden data-page-node-id="l0I2EJsWLSP2MlJNzw23Jp">
+            <div class="jmodal-box" data-page-node-id="39vduGNclVQ7WNJROauiBz">
+              <div class="jmodal-title" data-page-node-id="APUMHXwBhu65fnPadTEYsQ">小食</div>
+              <div class="jmodal-body" id="snackModalBody" data-page-node-id="KffX6UfWmbYl0IX0tTfm2m">已加入订单（演示）</div>
+              <button class="jmodal-ok" id="snackModalOk" data-page-node-id="LYBcxd9aGXOMQsZhdymDL5">确定</button>
+            </div>
+          </div>
+        </div>
+      </div><div class="zoom-badge" data-page-node-id="1QIxDNhpiuDZXjrvdAZvqq"></div></div>
+    </div>
+
+    <div class="col" data-page-node-id="9qMdrmHnVOr2B24mNP3Ds0">
+      <div class="col-head" data-page-node-id="eMBvJQAAqJTAX4gdpijdF8"><span class="tagx new" data-page-node-id="aZQDg4RG7JJQCDlAgB7YMl">改进后</span>纯展示卖品位，无购买入口</div>
+      <div class="shell" data-base="1180" data-page-node-id="2SCxqR9Fq9aHahkBkZfwpA"><div class="shell-inner" data-page-node-id="BXy9oxGV6pwrrTpyEcEfHO">
+        <div class="snack-wrap" data-page-node-id="br2aL4kel8ss2gX6zcu4ge">
+          <div class="sec-title" data-page-node-id="MbIOCWSnLD0bXZMZobCC0p">小食 <span class="ok-flag" data-page-node-id="TzPSML5TRPpsnEqnXEq7jG">✓ 已移除购买入口</span></div>
+          <div class="snack-grid" id="snackNew" data-page-node-id="BnxlFzNQU268Guz3jiAMck"></div>
+        </div>
+      </div><div class="zoom-badge" data-page-node-id="Mtge0GnpfqBerNTrd65vdz"></div></div>
+    </div>
+  </div>
+
+  <div class="flow" data-page-node-id="TOAuaiWud1mnZIlWBkiths">
+    <div class="flow-side" data-page-node-id="C0oHyq9PKKlcUAJmkqKG9x">
+      <div class="flow-head bad" data-page-node-id="28dF5mWbG9E2HVQ0HHwNjO">当前</div>
+      <div class="flow-chain" data-page-node-id="JVRpf4FaEbJpALSeUPQjwt">
+        <span class="chip" data-page-node-id="DnRkZ6Focjlge9eTwfrc27">点「购买」</span><span class="arw" data-page-node-id="FvcMxysI45tNsmJSq26cea">→</span>
+        <span class="chip" data-page-node-id="UiydnuP31CH6POFQKGe5S2">弹出提示框</span><span class="arw" data-page-node-id="BiTChI58VZEFBjsYieLw31">→</span>
+        <span class="chip dead" data-page-node-id="qC6EWzBNIL0eTOkTAc71At">什么都没发生</span>
+      </div>
+      <div class="flow-note" data-page-node-id="tbU2siYgOBdQPC83d09v9t">购物车数量不变，订单列表里也不会出现这条记录。</div>
+    </div>
+    <div class="flow-side" data-page-node-id="OeeUBSduZUOFDxOMvEIQH8">
+      <div class="flow-head good" data-page-node-id="F0UmucYa2LdE7met0ISopj">改进后</div>
+      <div class="flow-chain" data-page-node-id="fmCwcUfzdFtTiMyH5g5Vyr">
+        <span class="chip" data-page-node-id="wgdTu8ZDaSOzZw4TthhNmW">没有按钮</span><span class="arw" data-page-node-id="9TKxZ4VKJwDTQ3bQEDf058">→</span>
+        <span class="chip" data-page-node-id="wVGDf809VnzNOoGDXHMRVs">没有弹框</span><span class="arw" data-page-node-id="8a0HU0UnnxSjujPbtuu6NP">→</span>
+        <span class="chip ok" data-page-node-id="8tb4MjV0Q31y1U6M0C2g6K">不会误解</span>
+      </div>
+      <div class="flow-note" data-page-node-id="ZK04E99zhAzovK30WElD7y">小食作为卖品展示位存在，价格与规格一目了然。</div>
+    </div>
+  </div>
+  <div class="note" data-page-node-id="IOTYGtcr4ityzRZHsAMWtd">
+    <span class="mk" data-page-node-id="25kCmhNhzp8maWX9rw4PfP">说明</span>
+    <span data-page-node-id="77jmkcfCRqTQncZBu336M0">这里的改进<b data-page-node-id="s05ZU0KC4p2f0WCumnEoDZ">不是把模态框换成别的提示样式</b>，而是「这个按钮本来就不该存在」。演示数据来自 <code data-page-node-id="7C5veh5wzu4hLNXUQUzv3U">CustomerPanel.snackSection()</code>，5 个图标按 <code data-page-node-id="DhugshrKGTXiXuQyBTG13b">NavIcon</code> 的矢量绘制语义还原。</span>
+  </div>
+</section>
+
+<div class="foot" data-page-node-id="NVEiDfXjYiYlNkbVq3AhaS">
+  <b data-page-node-id="DocqriancFrKiWqU6S5Qeq">关于本页</b>　这是静态预览，用于确认改版方向；确认后再落地到 <code data-page-node-id="6Z3GWhRpdYKBWOVoURkPmH">LoginPanel.java</code>、<code data-page-node-id="VG3txgcpGLNiW8Q01rsHJk">CustomerPanel.java</code>、<code data-page-node-id="Roa9TLHbrOtTZdbhsF2out">AdminPanel.java</code>。
+  配色、圆角、字体均对齐项目既有设计系统，因此本页观感与真实 Swing 界面一致。
+</div>
+
+<style>
+/* ══ 登录页 ══ */
+.login-shell{
+  display:grid;grid-template-columns:430px 1fr;height:470px;position:relative;
+}
+.login-brand{
+  background:var(--canvas);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;padding:36px 0;
+}
+.mascot{width:190px;height:190px}
+.brand-title{font-size:32px;font-weight:500;color:#fff;letter-spacing:2px}
+.brand-sub{font-size:14px;color:#cbd1da}
+.login-form{background:var(--light-bg);padding:32px 30px;display:flex;flex-direction:column}
+.form-title{font-size:28px;font-weight:500;color:var(--dark-text);margin-bottom:24px}
+.fld{font-size:13px;font-weight:500;color:var(--dark-text);margin-bottom:7px}
+.inp{
+  width:100%;height:42px;background:#fff;color:var(--dark-text);
+  border:1px solid var(--light-input-border);padding:8px 12px;
+  font-size:14px;font-family:inherit;outline:none;transition:border-color .15s;
+}
+.inp:focus{border-color:var(--primary)}
+.inp.invalid{border-color:var(--danger);background:#fff5f5}
+.err-line{min-height:19px;font-size:13px;color:var(--danger);margin:8px 0 10px}
+.err-line.ok{color:var(--success)}
+.blk-btn{
+  width:100%;height:42px;border:none;border-radius:10px;cursor:pointer;
+  font-family:inherit;font-size:14px;font-weight:500;transition:background .15s,color .15s;
+}
+.blk-btn.primary{background:var(--primary);color:var(--dark-text)}
+.blk-btn.primary:hover{background:var(--primary-hover);color:#fff}
+.blk-btn.text{background:transparent;color:var(--primary);margin-top:12px}
+.enter-flag{
+  position:absolute;top:12px;right:12px;font-size:11.5px;
+  padding:3px 11px;border-radius:20px;
+  background:#241616;color:#d98d8d;border:1px solid #4a2a2a;
+}
+.enter-flag.ok{background:#13251b;color:#6eb98a;border-color:#20442f}
+
+/* ══ 导航 ══ */
+.topbar{height:74px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 26px;gap:18px}
+.tb-brand{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:500;color:var(--link);flex:0 0 auto}
+.ic-lg{width:26px;height:26px;fill:none;stroke:var(--primary);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tb-search{margin:0 auto;width:380px;height:40px;background:var(--surface2);border-radius:19px;display:flex;align-items:center;padding:0 5px 0 14px}
+.tb-search input{flex:1;background:none;border:none;outline:none;color:var(--ink);font-size:14px;font-family:inherit}
+.tb-search input::placeholder{color:var(--muted)}
+.tb-go{width:32px;height:32px;border-radius:50%;background:var(--link);border:none;display:grid;place-items:center;cursor:pointer;padding:0}
+.tb-go svg{width:19px;height:19px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
+.tb-nav{display:flex;gap:20px;align-items:center;flex:0 0 auto}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;position:relative;
+  color:var(--ink-soft);font-size:12px;cursor:pointer;padding:7px 12px;border-radius:10px;
+  transition:background .15s,color .15s;
+}
+.nav-item .ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.nav-item:hover{color:var(--primary);background:var(--primary-soft)}
+.nav-item.on{color:var(--primary);background:var(--primary-soft)}
+.nav-item.on::after{content:"";position:absolute;left:12px;right:12px;bottom:1px;height:2px;background:var(--primary);border-radius:2px}
+/* 旧版中和 */
+.old .nav-item:hover{color:var(--ink-soft);background:transparent}
+.old .nav-item.on{color:var(--ink-soft);background:transparent}
+.old .nav-item.on::after{display:none}
+
+.admin-shell{background:var(--canvas)}
+.admin-head{height:64px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 26px}
+.admin-brand{font-size:18px;font-weight:500}
+.admin-right{font-size:13px;color:var(--muted);display:flex;gap:12px;align-items:center}
+.admin-right b{color:var(--muted);font-weight:400;cursor:pointer}
+.admin-body{display:flex;align-items:stretch;min-height:230px}
+.sidebar{width:210px;flex:0 0 210px;background:var(--surface);border-right:1px solid var(--line);padding:14px 0;display:flex;flex-direction:column}
+.side-item{
+  height:46px;display:flex;align-items:center;padding:0 26px;font-size:14px;
+  color:var(--ink);cursor:pointer;border-left:3px solid transparent;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.side-item:hover{color:var(--primary);background:var(--primary-soft)}
+.side-item.on{color:var(--primary);background:var(--primary-soft);border-left-color:var(--primary);font-weight:500}
+.old .side-item:hover{color:var(--ink);background:transparent}
+.old .side-item.on{color:var(--ink);background:transparent;border-left-color:transparent;font-weight:400}
+.admin-main{flex:1;background:var(--canvas);display:grid;place-items:center;min-width:0}
+.ph{color:#3d3d3d;font-size:13px;border:1px dashed var(--line);padding:42px 76px;border-radius:10px}
+
+/* ══ 表格 ══ */
+.col-main{display:block;padding:0}
+.toolbar{height:64px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 26px;gap:10px}
+.tb-title{font-size:22px;font-weight:500}
+.tb-actions{display:flex;align-items:center;gap:8px}
+.tbl-search{width:150px;height:36px;background:transparent;color:var(--ink);border:1px solid var(--line);padding:7px 10px;outline:none;font-family:inherit;font-size:13px;transition:border-color .15s}
+.tbl-search:focus{border-color:var(--primary)}
+.table-wrap{position:relative;background:var(--surface);min-height:186px}
+.dtable{width:100%;border-collapse:collapse;font-size:14px}
+.dtable th{background:var(--surface);color:var(--muted);font-size:13px;font-weight:500;text-align:left;padding:12px 16px;border-bottom:1px solid var(--line)}
+.dtable td{color:var(--ink-soft);padding:9px 16px;height:34px;border-bottom:1px solid var(--line)}
+.tbl-empty{
+  position:absolute;left:0;right:0;bottom:0;top:41px;background:var(--surface);
+  display:grid;place-content:center;justify-items:center;text-align:center;padding:34px 20px;
+}
+.tbl-empty[hidden]{display:none}
+.empty-ic{width:48px;height:48px;fill:none;stroke:#4a4a4a;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.tbl-empty h3{font-size:15px;font-weight:500;color:var(--ink-soft);margin:13px 0 6px}
+.tbl-empty p{font-size:13px;color:var(--muted);margin-bottom:16px}
+.tbl-empty .kw{color:var(--primary)}
+.tbl-empty-old{
+  position:absolute;left:0;right:0;bottom:0;top:41px;background:var(--surface);
+  display:grid;place-content:center;color:#333;font-size:12.5px;font-style:italic;
+}
+.tbl-empty-old[hidden]{display:none}
+
+.ctrl-bar{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--line);border-radius:11px;
+  padding:12px 16px;margin-bottom:20px;
+}
+.ctrl-label{font-size:13px;font-weight:500;color:var(--ink-soft);margin-right:2px}
+.ctrl-tip{font-size:12.5px;color:var(--muted);margin-left:auto}
+.ctrl-tip code{background:#0a0a0a;border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--ink-soft);font-family:Consolas,Monaco,monospace}
+
+/* ══ 小食 ══ */
+.snack-wrap{padding:26px;position:relative;background:var(--canvas)}
+.sec-title{font-size:19px;font-weight:500;margin-bottom:15px;display:flex;align-items:center;gap:12px}
+.ok-flag{font-size:12px;font-weight:400;color:var(--success)}
+.snack-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.snack-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  min-height:196px;transition:border-color .18s;
+}
+.snack-card.old:hover{border-color:var(--primary)}
+.badge{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;flex:0 0 64px;margin-bottom:6px}
+.snack-ic{width:34px;height:34px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.s-name{font-size:14px;font-weight:500;color:var(--ink)}
+.s-price{font-size:13px;font-weight:500;color:var(--primary)}
+.buy{margin-top:auto;width:100%}
+.s-spec{margin-top:auto;font-size:12px;color:var(--muted);text-align:center;letter-spacing:.2px}
+.snack-dead{
+  font-size:11.5px;color:#c98b8b;line-height:1.5;text-align:center;
+  margin-top:6px;padding-top:7px;border-top:1px dashed #3a2a2a;
+}
+
+.flow{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:16px}
+.flow-side{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:16px 18px}
+.flow-head{font-size:13px;font-weight:500;margin-bottom:12px}
+.flow-head.bad{color:#c98b8b}
+.flow-head.good{color:#8ecfa6}
+.flow-chain{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:11px}
+.chip{font-size:12.5px;padding:5px 12px;border-radius:20px;background:var(--surface2);color:var(--ink-soft);border:1px solid var(--line)}
+.chip.dead{color:#c98b8b;border-color:#4a2a2a;background:#241616}
+.chip.ok{color:#8ecfa6;border-color:#20442f;background:#13251b}
+.arw{color:var(--muted);font-size:13px}
+.flow-note{font-size:12.5px;color:var(--muted);line-height:1.6}
+</style>
+
+<script>
+/* ══════ 壳等比缩放（基准 1180px，对应 MovieTicketDemoApp 最小宽度） ══════ */
+function fitShells(){
+  document.querySelectorAll('.shell').forEach(function(shell){
+    var inner = shell.querySelector('.shell-inner');
+    if(!inner) return;
+    var base = parseFloat(shell.dataset.base || '1180');
+    var avail = shell.clientWidth;
+    var k = avail / base;
+    inner.style.transform = 'scale(' + k + ')';
+    shell.style.height = (inner.offsetHeight * k) + 'px';
+    var badge = shell.querySelector('.zoom-badge');
+    if(badge) badge.textContent = Math.round(k*100) + '%';
+  });
+}
+window.addEventListener('resize', fitShells);
+
+/* ══════ 页面级 tab ══════ */
+function showTab(name){
+  var found=false;
+  document.querySelectorAll('.tabs .tab').forEach(function(t){
+    var on = t.dataset.tab===name; t.classList.toggle('on', on); if(on) found=true;
+  });
+  if(!found) return false;
+  document.querySelectorAll('.panel').forEach(function(p){
+    p.classList.toggle('hidden', p.dataset.tab !== name);
+  });
+  fitShells();
+  return true;
+}
+document.querySelectorAll('.tabs .tab').forEach(function(tab){
+  tab.addEventListener('click', function(){
+    showTab(tab.dataset.tab);
+    if(history.replaceState) history.replaceState(null,'','#'+tab.dataset.tab);
+  });
+});
+/* 支持 #login / #nav / #table / #snack 直达 */
+function applyHash(){
+  var h=(location.hash||'').replace('#','');
+  if(h) showTab(h);
+}
+window.addEventListener('hashchange', applyHash);
+
+/* ══════ TAB1 · 登录 ══════ */
+(function(){
+  var oU=document.getElementById('oldUser'), oP=document.getElementById('oldPass'),
+      oE=document.getElementById('oldErr'), oB=document.getElementById('oldBtn');
+  function oldSubmit(){
+    oE.textContent=' ';
+    if(oU.value.trim()==='customer' && oP.value==='123456'){ oE.classList.add('ok'); oE.textContent='登录成功（旧版只能用鼠标点）'; }
+    else { oE.textContent='用户名或密码错误'; }
+  }
+  oB.addEventListener('click', oldSubmit);
+  /* 旧版刻意不绑回车 —— 项目里没有 setDefaultButton */
+
+  var nU=document.getElementById('newUser'), nP=document.getElementById('newPass'),
+      nE=document.getElementById('newErr'), nB=document.getElementById('newBtn');
+  var busy=false;
+  function clearInv(){ [nU,nP].forEach(function(el){ el.classList.remove('invalid'); }); nE.textContent=' '; nE.classList.remove('ok'); }
+  function newSubmit(){
+    if(busy) return;
+    clearInv();
+    var bad=[];
+    if(!nU.value.trim()){ nU.classList.add('invalid'); bad.push('用户名不能为空'); }
+    if(!nP.value){ nP.classList.add('invalid'); bad.push('密码不能为空'); }
+    if(bad.length){ nE.textContent=bad.join('；'); (nU.value.trim()?nP:nU).focus(); return; }
+    if(nU.value.trim()!=='customer' || nP.value!=='123456'){ nE.textContent='用户名或密码错误'; return; }
+    busy=true; nE.classList.add('ok'); nE.textContent='登录成功，正在进入首页…';
+    setTimeout(function(){ nE.classList.remove('ok'); nE.textContent=' '; busy=false; },1500);
+  }
+  [nU,nP].forEach(function(el){
+    el.addEventListener('keydown', function(e){
+      if(e.key==='Enter'){ e.preventDefault(); newSubmit(); }
+    });
+    el.addEventListener('input', function(){ el.classList.remove('invalid'); });
+  });
+  nB.addEventListener('click', newSubmit);
+})();
+
+/* ══════ TAB2 · 导航 ══════ */
+document.querySelectorAll('.topbar:not(.old) .tb-nav').forEach(function(nav){
+  nav.querySelectorAll('.nav-item').forEach(function(item){
+    item.addEventListener('click', function(){
+      nav.querySelectorAll('.nav-item').forEach(function(i){ i.classList.toggle('on', i===item); });
+    });
+  });
+});
+document.querySelectorAll('.admin-shell:not(.old) .sidebar').forEach(function(sb){
+  sb.querySelectorAll('.side-item').forEach(function(item){
+    item.addEventListener('click', function(){
+      sb.querySelectorAll('.side-item').forEach(function(i){ i.classList.toggle('on', i===item); });
+      var ph=document.getElementById('adminPh');
+      if(ph) ph.textContent=item.textContent;
+    });
+  });
+});
+
+/* ══════ TAB3 · 表格 ══════ */
+var CUSTOMERS=[
+  {id:'C001',user:'customer',name:'张伟',  tier:'银卡会员'},
+  {id:'C002',user:'lisi',    name:'李四',  tier:'普通会员'},
+  {id:'C003',user:'wangwu',  name:'王五',  tier:'金卡会员'},
+  {id:'C004',user:'chen',    name:'陈静',  tier:'金卡会员'},
+  {id:'C005',user:'lin',     name:'林涛',  tier:'普通会员'}
+];
+var forceEmpty=false;
+
+function rowsFor(kw){
+  if(forceEmpty) return [];
+  if(!kw) return CUSTOMERS.slice();
+  return CUSTOMERS.filter(function(c){
+    return c.id.indexOf(kw)>=0 || c.user.indexOf(kw)>=0 || c.name.indexOf(kw)>=0 || c.tier.indexOf(kw)>=0;
+  });
+}
+function paint(bodyEl, rows){
+  bodyEl.innerHTML = rows.map(function(c){
+    return '<tr><td>'+c.id+'</td><td>'+c.user+'</td><td>'+c.name+'</td><td>'+c.tier+'</td></tr>';
+  }).join('');
+}
+function refreshOld(){
+  var kw=document.getElementById('oldKw').value.trim();
+  var rows=rowsFor(kw);
+  paint(document.getElementById('oldBody'), rows);
+  document.getElementById('oldNoHint').hidden = rows.length>0;   /* 旧版只有一个灰字，没有真正的占位 */
+}
+function refreshNew(){
+  var kw=document.getElementById('newKw').value.trim();
+  var rows=rowsFor(kw);
+  paint(document.getElementById('newBody'), rows);
+  var emp=document.getElementById('newEmpty');
+  emp.hidden = rows.length>0;
+  if(rows.length===0) emp.querySelector('.kw').textContent = kw || '当前筛选条件';
+}
+function refreshAll(){ refreshOld(); refreshNew(); }
+
+var oK=document.getElementById('oldKw'), nK=document.getElementById('newKw');
+oK.addEventListener('input', refreshOld);
+oK.addEventListener('keydown', function(e){ if(e.key==='Enter') refreshOld(); });
+document.getElementById('oldFind').addEventListener('click', refreshOld);
+nK.addEventListener('input', refreshNew);
+nK.addEventListener('keydown', function(e){ if(e.key==='Enter') refreshNew(); });
+document.getElementById('newFind').addEventListener('click', refreshNew);
+document.getElementById('newClear').addEventListener('click', function(){
+  nK.value=''; forceEmpty=false; syncCtrl(); refreshAll(); nK.focus();
+});
+
+var bHas=document.getElementById('btnHasData'), bNo=document.getElementById('btnNoData');
+function syncCtrl(){
+  bHas.classList.toggle('on', !forceEmpty);
+  bNo.classList.toggle('on', forceEmpty);
+}
+bHas.addEventListener('click', function(){ forceEmpty=false; syncCtrl(); refreshAll(); });
+bNo.addEventListener('click', function(){ forceEmpty=true; syncCtrl(); refreshAll(); });
+
+/* ══════ TAB4 · 小食 ══════ */
+var SNACKS=[
+  {ic:'ic-popcorn', color:'var(--primary)', name:'爆米花', price:'18.00', spec:'大桶 · 约 120g'},
+  {ic:'ic-cola',    color:'var(--link)',    name:'可乐',   price:'12.00', spec:'中杯 · 500ml'},
+  {ic:'ic-fries',   color:'var(--gold)',    name:'薯条',   price:'16.00', spec:'大份 · 约 150g'},
+  {ic:'ic-icecream',color:'var(--purple)',  name:'冰淇淋', price:'15.00', spec:'单球 · 90g'},
+  {ic:'ic-hotdog',  color:'var(--primary)', name:'热狗',   price:'20.00', spec:'经典 · 含面包'}
+];
+var gridOld=document.getElementById('snackOld'), gridNew=document.getElementById('snackNew');
+SNACKS.forEach(function(s){
+  var d=document.createElement('div');
+  d.className='snack-card old';
+  d.innerHTML='<div class="badge" style="background:'+s.color+'"><svg class="snack-ic"><use href="#'+s.ic+'"/></svg></div>'
+    +'<div class="s-name">'+s.name+'</div><div class="s-price">¥'+s.price+'</div>'
+    +'<button class="btn-prim buy">购买</button>'
+    +'<div class="snack-dead">↑ 只弹提示<br>不进购物车、不进订单</div>';
+  d.querySelector('.buy').addEventListener('click', function(){
+    var m=document.getElementById('snackModal');
+    document.getElementById('snackModalBody').textContent = s.name+' 已加入订单（演示）';
+    m.hidden=false;
+  });
+  gridOld.appendChild(d);
+
+  var n=document.createElement('div');
+  n.className='snack-card';
+  n.innerHTML='<div class="badge" style="background:'+s.color+'"><svg class="snack-ic"><use href="#'+s.ic+'"/></svg></div>'
+    +'<div class="s-name">'+s.name+'</div><div class="s-price">¥'+s.price+'</div>'
+    +'<div class="s-spec">'+s.spec+'</div>';
+  gridNew.appendChild(n);
+});
+document.getElementById('snackModalOk').addEventListener('click', function(){
+  document.getElementById('snackModal').hidden=true;
+});
+
+/* ══════ 初始化 ══════ */
+window.addEventListener('load', function(){
+  applyHash();
+  syncCtrl(); refreshAll(); fitShells();
+  setTimeout(fitShells, 60);   /* 等字体加载后重量一次，避免高度算错 */
+});
+document.addEventListener('DOMContentLoaded', fitShells);
+</script>
+</body>
+</html>
