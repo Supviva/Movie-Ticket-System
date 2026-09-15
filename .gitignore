@@ -1,0 +1,12 @@
+target/
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+*.log
+
+# 工作区辅助文件（AI 协作记忆与产物，不随项目上传）
+.workbuddy/
+AGENTS.md
