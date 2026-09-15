@@ -1,5 +1,6 @@
 package com.movieticket.model;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -22,7 +23,7 @@ public record TicketOrder(
         String ticketCode,
         String createdAt,
         MembershipLevel upgradedFrom,
-        MembershipLevel upgradedTo) {
+        MembershipLevel upgradedTo) implements Serializable {
 
     public TicketOrder(String id, String userId, String username, List<TicketOrderItem> items,
                        int originalFen, int discountFen, int payableFen, String membershipLabel,
